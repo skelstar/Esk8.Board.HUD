@@ -9,21 +9,21 @@
 #include <VescData.h>
 #include <elapsedMillis.h>
 
-#define SOFTSPI
+// #define SOFTSPI
+// ESPmini pins
 // #define SOFT_SPI_MISO_PIN 22 // Orange
 // #define SOFT_SPI_MOSI_PIN 21 // Blue
 // #define SOFT_SPI_SCK_PIN 16  // Yellow
-// #define SPI_CE 5             // WHITE
-// #define SPI_CS 23            // GREEN
+// #define SPI_CE 5  // WHITE
+// #define SPI_CS 23 // GREEN
 
-#define SOFT_SPI_MOSI_PIN 13 // Blue
-#define SOFT_SPI_MISO_PIN 12 // Orange
-#define SOFT_SPI_SCK_PIN 15  // Yellow
-#define SPI_CE 17
-#define SPI_CS 2
+// controller pins
+// #define SOFT_SPI_MISO_PIN 12 // Orange
+// #define SOFT_SPI_MOSI_PIN 13 // Blue
+// #define SOFT_SPI_SCK_PIN 15  // Yellow
+// #define SPI_CE 17
+// #define SPI_CS 2
 
-#include <DigitalIO.h>
-#include <RF24.h>
 #include <RF24Network.h>
 #include <NRF24L01Lib.h>
 
@@ -39,7 +39,7 @@ ControllerClass controller;
 
 NRF24L01Lib nrf24;
 
-RF24 radio(SPI_CE, SPI_CS);
+RF24 radio(SPI_CE_PIN, SPI_CS_PIN);
 RF24Network network(radio);
 
 //------------------------------------------------------------------
@@ -51,9 +51,18 @@ void packet_available_cb(uint16_t from_id, uint8_t type)
 
 void setup()
 {
+  delay(3000);
   Serial.begin(115200);
+  Serial.printf("ready!\n");
 
-  nrf24.begin(&radio, &network, COMMS_HUD, packet_available_cb);
+  nrf24.begin(&radio, &network, COMMS_BOARD, packet_available_cb);
+
+  // Serial.printf("MISO:%d MOSI:%d SCK:%d CE:%d CS:%d\n",
+  //               SOFT_SPI_MISO_PIN,
+  //               SOFT_SPI_MOSI_PIN,
+  //               SOFT_SPI_SCK_PIN,
+  //               SPI_CE_PIN,
+  //               SPI_CS_PIN);
 
   // xTaskCreatePinnedToCore(
   //     footLightTask_0,
@@ -66,9 +75,22 @@ void setup()
   // xFootLightEventQueue = xQueueCreate(1, sizeof(FootLightEvent));
 }
 
+elapsedMillis sincePulse, sinceCheckRF24;
+
 void loop()
 {
-  nrf24.update();
 
-  vTaskDelay(10);
+  if (sincePulse > 1000)
+  {
+    sincePulse = 0;
+    Serial.printf("pulse\n");
+  }
+
+  if (sinceCheckRF24 > 500)
+  {
+    sinceCheckRF24 = 0;
+    nrf24.update();
+  }
+
+  delay(50);
 }
