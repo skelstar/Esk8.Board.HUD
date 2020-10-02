@@ -9,21 +9,6 @@
 #include <VescData.h>
 #include <elapsedMillis.h>
 
-// #define SOFTSPI
-// ESPmini pins
-// #define SOFT_SPI_MISO_PIN 22 // Orange
-// #define SOFT_SPI_MOSI_PIN 21 // Blue
-// #define SOFT_SPI_SCK_PIN 16  // Yellow
-// #define SPI_CE 5  // WHITE
-// #define SPI_CS 23 // GREEN
-
-// controller pins
-// #define SOFT_SPI_MISO_PIN 12 // Orange
-// #define SOFT_SPI_MOSI_PIN 13 // Blue
-// #define SOFT_SPI_SCK_PIN 15  // Yellow
-// #define SPI_CE 17
-// #define SPI_CS 2
-
 #include <RF24Network.h>
 #include <NRF24L01Lib.h>
 
@@ -56,23 +41,6 @@ void setup()
   Serial.printf("ready!\n");
 
   nrf24.begin(&radio, &network, COMMS_BOARD, packet_available_cb);
-
-  // Serial.printf("MISO:%d MOSI:%d SCK:%d CE:%d CS:%d\n",
-  //               SOFT_SPI_MISO_PIN,
-  //               SOFT_SPI_MOSI_PIN,
-  //               SOFT_SPI_SCK_PIN,
-  //               SPI_CE_PIN,
-  //               SPI_CS_PIN);
-
-  // xTaskCreatePinnedToCore(
-  //     footLightTask_0,
-  //     "footLightTask_0",
-  //     /*stack size*/ 10000,
-  //     /*params*/ NULL,
-  //     /*priority*/ 3,
-  //     /*handle*/ NULL,
-  //     /*core*/ 0);
-  // xFootLightEventQueue = xQueueCreate(1, sizeof(FootLightEvent));
 }
 
 elapsedMillis sincePulse, sinceCheckRF24;
@@ -90,6 +58,7 @@ void loop()
   {
     sinceCheckRF24 = 0;
     nrf24.update();
+    Serial.printf("nrf24 update()\n");
   }
 
   delay(50);
