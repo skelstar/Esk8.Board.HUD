@@ -9,41 +9,31 @@
 #include <VescData.h>
 #include <elapsedMillis.h>
 
-#include <RF24Network.h>
-#include <NRF24L01Lib.h>
-
 #define COMMS_BOARD 00
 #define COMMS_CONTROLLER 01
 #define COMMS_HUD 02
 
 //------------------------------------------------------------------
 
-VescData board_packet;
+#include <HUDData.h>
+
+bool packetReady;
+HUDData hudData;
+
+#include <bleNotify.h>
 
 ControllerClass controller;
-
-NRF24L01Lib nrf24;
-
-RF24 radio(SPI_CE_PIN, SPI_CS_PIN);
-RF24Network network(radio);
-
-//------------------------------------------------------------------
-void packet_available_cb(uint16_t from_id, uint8_t type)
-{
-  Serial.printf("rx from %d\n", from_id);
-}
-//------------------------------------------------------------------
 
 void setup()
 {
   delay(3000);
   Serial.begin(115200);
-  Serial.printf("ready!\n");
+  Serial.printf("Esk8.Board.HUD ready!\n");
 
-  nrf24.begin(&radio, &network, COMMS_BOARD, packet_available_cb);
+  setupBLE();
 }
 
-elapsedMillis sincePulse, sinceCheckRF24;
+elapsedMillis sincePulse, sinceSentToClient;
 
 void loop()
 {
@@ -51,14 +41,23 @@ void loop()
   if (sincePulse > 1000)
   {
     sincePulse = 0;
-    Serial.printf("pulse\n");
+    // Serial.printf("pulse\n");
   }
 
-  if (sinceCheckRF24 > 500)
+  if (sinceSentToClient > 3000 && clientConnected)
   {
-    sinceCheckRF24 = 0;
-    nrf24.update();
-    Serial.printf("nrf24 update()\n");
+    sinceSentToClient = 0;
+    sendDataToClient(hudData);
+    hudData.id++;
+    Serial.printf("sending to client\n");
+  }
+
+  if (packetReady)
+  {
+    packetReady = false;
+    Serial.printf("onWrite() got: %d, event: %s\n", hudData.id, eventToString(hudData.state));
+    hudData.id++;
+    sendDataToClient(hudData);
   }
 
   delay(50);
