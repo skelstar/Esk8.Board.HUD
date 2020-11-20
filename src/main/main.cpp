@@ -30,6 +30,17 @@ const char *ledStateEventNames[] = {
     "EV_LED_IDLE",
 };
 
+enum ButtonEvent
+{
+  EV_BTN_NONE = 0,
+  EV_BTN_DOUBLE_CLICK,
+};
+
+const char *ButtonEventNames[] = {
+    "EV_BTN_NONE",
+    "EV_BTN_DOUBLE_CLICK",
+};
+
 class Hud
 {
 public:
@@ -65,6 +76,8 @@ uint8_t brightnessIndex = 1;
 
 ControllerClass controller;
 
+//-----------------------------------------------
+
 void setup()
 {
   Serial.begin(115200);
@@ -82,6 +95,11 @@ void setup()
     FastLED.show();
   });
 
+  button.setDoubleClickHandler([](Button2 &btn) {
+    sendDataToClient(EV_BTN_DOUBLE_CLICK);
+    Serial.printf("--> event %s\n", ButtonEventNames[(int)EV_BTN_DOUBLE_CLICK]);
+  });
+
   // core 0
   xTaskCreatePinnedToCore(ledTask_1, "ledTask_1", 10000, NULL, /*priority*/ 3, NULL, /*core*/ 1);
 
@@ -91,6 +109,7 @@ void setup()
 
   setupBLE();
 }
+//-----------------------------------------------
 
 elapsedMillis sincePulse, sinceSentToClient;
 
