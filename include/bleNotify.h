@@ -12,33 +12,29 @@ BLECharacteristic *pCharacteristic;
 template <typename T>
 void sendDataToClient(T data);
 
-bool clientConnected = false;
-
-class MyServerCallbacks : public BLECharacteristicCallbacks
+class MyCharacteristicsCallbacks : public BLECharacteristicCallbacks
 {
-  // receive
-
-#define CLEAR_TRIP_ODO_COMMAND 99
-
   void onWrite(BLECharacteristic *pCharacteristic)
   {
     memcpy(&hudData, pCharacteristic->getData(), sizeof(HUDData));
-    packetReady = true;
-    // Serial.printf("onWrite() got: %d\n", hudData.id);
-    // hudData.id++;
-    // sendDataToClient(hudData);
+    ledsQueueManager->send(hudData.event);
   }
+};
 
+class MyServerCallbacks : public BLEServerCallbacks
+{
   void onConnect(BLEServer *pServer)
   {
-    Serial.printf("client connected\n");
-    clientConnected = true;
+    Serial.printf("Client connected\n");
+    ledsQueueManager->send(EV_LED_CONNECTED);
+    hud.clientConnected = true;
   };
 
   void onDisconnect(BLEServer *pServer)
   {
-    Serial.printf("client disconnected\n");
-    clientConnected = false;
+    Serial.printf("Client disconnected\n");
+    ledsQueueManager->send(EV_LED_DISCONNECTED);
+    hud.clientConnected = false;
   }
 };
 
@@ -51,16 +47,21 @@ void setupBLE()
   Serial.printf("[Bluetooth] Mac Address = %02X:%02X:%02X:%02X:%02X:%02X\r\n", mac5[0], mac5[1], mac5[2], mac5[3], mac5[4], mac5[5]);
 
   BLEServer *pServer = BLEDevice::createServer();
+  pServer->setCallbacks(new MyServerCallbacks());
+
   BLEService *pService = pServer->createService(SERVICE_UUID);
+
+  // Create a BLE Characteristic
   pCharacteristic = pService->createCharacteristic(
       CHARACTERISTIC_UUID,
       BLECharacteristic::PROPERTY_READ |
           BLECharacteristic::PROPERTY_WRITE |
-          BLECharacteristic::PROPERTY_NOTIFY);
+          BLECharacteristic::PROPERTY_NOTIFY |
+          BLECharacteristic::PROPERTY_INDICATE);
   pCharacteristic->addDescriptor(new BLE2902());
+  pCharacteristic->setCallbacks(new MyCharacteristicsCallbacks());
 
-  pCharacteristic->setCallbacks(new MyServerCallbacks());
-  pCharacteristic->setValue("Hello World says Neil");
+  // pCharacteristic->setValue("Hello World says Neil");
   pService->start();
   BLEAdvertising *pAdvertising = BLEDevice::getAdvertising();
   pAdvertising->addServiceUUID(SERVICE_UUID);
@@ -68,7 +69,6 @@ void setupBLE()
   pAdvertising->setMinPreferred(0x06); // functions that help with iPhone connections issue
   pAdvertising->setMinPreferred(0x12);
   BLEDevice::startAdvertising();
-  Serial.printf("Characteristic defined! Now you can read it in your phone!\n");
 }
 
 template <typename T>
