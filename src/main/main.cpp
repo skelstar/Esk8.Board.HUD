@@ -9,37 +9,11 @@
 #include <VescData.h>
 #include <elapsedMillis.h>
 
+#include <constants.h>
+
 #define COMMS_BOARD 00
 #define COMMS_CONTROLLER 01
 #define COMMS_HUD 02
-
-enum LedsStateEvent
-{
-  EV_LED_CONNECTED = 0,
-  EV_LED_PULSE_RED,
-  EV_LED_FLASH_GREEN,
-  EV_LED_DISCONNECTED,
-  EV_LED_IDLE,
-};
-
-const char *ledStateEventNames[] = {
-    "EV_LED_CONNECTED",
-    "EV_LED_PULSE_RED",
-    "EV_LED_FLASH_GREEN",
-    "EV_LED_DISCONNECTED",
-    "EV_LED_IDLE",
-};
-
-enum ButtonEvent
-{
-  EV_BTN_NONE = 0,
-  EV_BTN_DOUBLE_CLICK,
-};
-
-const char *ButtonEventNames[] = {
-    "EV_BTN_NONE",
-    "EV_BTN_DOUBLE_CLICK",
-};
 
 class Hud
 {
@@ -60,6 +34,8 @@ xQueueHandle xLedsEventQueue;
 EventQueueManager *ledsQueueManager;
 
 #include <leds.h>
+LedDisplayClass *ledDisplay;
+
 #include <hudTask.h>
 #include <bleNotify.h>
 
@@ -85,7 +61,10 @@ void setup()
 
   FastLED.setBrightness(brightnesses[brightnessIndex]);
   FastLED.addLeds<NEOPIXEL, LED_PIN>(leds, NUM_LEDS);
-  setLeds(CRGB::Black);
+
+  ledDisplay = new LedDisplayClass();
+
+  ledDisplay->setLeds(CRGB::Black);
 
   button.setTapHandler([](Button2 &btn) {
     brightnessIndex++;
@@ -95,9 +74,21 @@ void setup()
     FastLED.show();
   });
 
+  if (USE_DEEPSLEEP)
+    esp_sleep_enable_ext1_wakeup(GPIO_NUM_39, ESP_EXT1_WAKEUP_ALL_LOW);
+
   button.setDoubleClickHandler([](Button2 &btn) {
     sendDataToClient(EV_BTN_DOUBLE_CLICK);
     Serial.printf("--> event %s\n", ButtonEventNames[(int)EV_BTN_DOUBLE_CLICK]);
+  });
+
+  button.setTripleClickHandler([](Button2 &btn) {
+    if (USE_DEEPSLEEP)
+    {
+      Serial.printf("Going to sleep!...");
+      delay(100);
+      esp_deep_sleep_start();
+    }
   });
 
   // core 0

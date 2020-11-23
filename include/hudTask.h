@@ -32,7 +32,7 @@ State stateIdle(
 State statePulseRed(
     [] {
       printState("statePulseRed");
-      setLeds(CRGB::DarkRed);
+      ledDisplay->setLeds(CRGB::DarkRed);
       sinceStartedPulseRed = 0;
     },
     [] {
@@ -40,28 +40,51 @@ State statePulseRed(
       {
         sinceStartedPulseRed = 0;
         pulseRedOn = !pulseRedOn;
-        setLeds(pulseRedOn ? CRGB::DarkRed : CRGB::Black);
+        ledDisplay->setLeds(pulseRedOn ? CRGB::DarkRed : CRGB::Black);
       }
     },
     [] {
-      setLeds(CRGB::Black);
+      ledDisplay->setLeds(CRGB::Black);
+    });
+
+State stateSpinGreenFast(
+    [] {
+      printState("stateSpinGreenFast");
+      sinceUpdatedPerimeter = 0;
+    },
+    [] {
+      if (sinceUpdatedPerimeter > LED_SPIN_SPEED_FAST_MS)
+      {
+        sinceUpdatedPerimeter = 0;
+        ledDisplay->spinClockwise(CRGB::DarkGreen);
+      }
+    },
+    [] {
+      ledDisplay->setLeds(CRGB::Black);
     });
 
 State stateFlashGreen(
     [] {
       printState("stateFlashGreen");
-      setLeds(CRGB::DarkGreen);
+      ledDisplay->setLeds(CRGB::DarkGreen);
     },
-    [] {},
+    NULL,
     [] {
-      setLeds(CRGB::Black);
+      ledDisplay->setLeds(CRGB::Black);
     });
 
 State stateDisconnected(
     [] {
       printState("stateDisconnected");
+      sinceUpdatedPerimeter = 0;
     },
-    [] {},
+    [] {
+      if (sinceUpdatedPerimeter > LED_SPIN_SPEED_MED_MS)
+      {
+        sinceUpdatedPerimeter = 0;
+        ledDisplay->spinClockwise(CRGB::DarkBlue);
+      }
+    },
     [] {});
 
 //---------------------------------------------
@@ -75,7 +98,7 @@ void ledTask_1(void *pvParameters)
 {
   Serial.printf("ledTask_1 running on core %d\n", xPortGetCoreID());
 
-  ledsState = new Fsm(&stateIdle);
+  ledsState = new Fsm(&stateDisconnected);
   ledsState->setEventTriggeredCb(printEventCb);
   addLedsStateTransitions();
 
@@ -110,6 +133,9 @@ void addLedsStateTransitions()
 
   ledsState->add_transition(&stateDisconnected, &stateIdle, EV_LED_CONNECTED, NULL);
   ledsState->add_transition(&stateIdle, &stateDisconnected, EV_LED_DISCONNECTED, NULL);
+
+  ledsState->add_transition(&stateIdle, &stateSpinGreenFast, EV_LED_SPIN_GREEN_FAST, NULL);
+  ledsState->add_transition(&stateSpinGreenFast, &stateIdle, EV_LED_CONNECTED, NULL);
 }
 
 void triggerLedsStateEvent(LedsStateEvent ev)
