@@ -15,6 +15,7 @@ void printState(char *text);
 const unsigned long FLASH_LENGTH_MS = 1000;
 elapsedMillis sinceStartedCycle,
     sinceStartedPulseRed,
+    sinceUpdatedWipe,
     sinceReadQueue;
 bool pulseRedOn;
 
@@ -25,6 +26,7 @@ Fsm *ledsState;
 State stateIdle(
     [] {
       printState("stateIdle");
+      ledDisplay->setLeds(CRGB::Black);
     },
     [] {},
     [] {});
@@ -50,13 +52,13 @@ State statePulseRed(
 State stateSpinGreenFast(
     [] {
       printState("stateSpinGreenFast");
-      sinceUpdatedPerimeter = 0;
+      sinceUpdatedWipe = 0;
     },
     [] {
-      if (sinceUpdatedPerimeter > LED_SPIN_SPEED_FAST_MS)
+      if (sinceUpdatedWipe > LED_SPIN_SPEED_FAST_MS)
       {
-        sinceUpdatedPerimeter = 0;
-        ledDisplay->spinClockwise(CRGB::DarkGreen);
+        sinceUpdatedWipe = 0;
+        ledDisplay->animation(CRGB::DarkGreen);
       }
     },
     [] {
@@ -76,13 +78,13 @@ State stateFlashGreen(
 State stateDisconnected(
     [] {
       printState("stateDisconnected");
-      sinceUpdatedPerimeter = 0;
+      sinceUpdatedWipe = 0;
     },
     [] {
-      if (sinceUpdatedPerimeter > LED_SPIN_SPEED_MED_MS)
+      if (sinceUpdatedWipe > LED_SPIN_SPEED_MED_MS)
       {
-        sinceUpdatedPerimeter = 0;
-        ledDisplay->spinClockwise(CRGB::DarkBlue);
+        sinceUpdatedWipe = 0;
+        ledDisplay->animation(CRGB::DarkBlue);
       }
     },
     [] {});
@@ -94,48 +96,21 @@ void printEventCb(int ev)
   Serial.printf("--> event: %s\n", ledStateEventNames[ev]);
 }
 
-void ledTask_1(void *pvParameters)
-{
-  Serial.printf("ledTask_1 running on core %d\n", xPortGetCoreID());
-
-  ledsState = new Fsm(&stateDisconnected);
-  ledsState->setEventTriggeredCb(printEventCb);
-  addLedsStateTransitions();
-
-  while (true)
-  {
-    vTaskDelay(10);
-
-    if (sinceReadQueue > 500)
-    {
-      sinceReadQueue = 0;
-      if (ledsQueueManager->messageAvailable())
-      {
-        LedsStateEvent ev = (LedsStateEvent)ledsQueueManager->read();
-        ledsState->trigger(ev);
-      }
-    }
-
-    ledsState->run_machine();
-  }
-  vTaskDelete(NULL);
-}
-
 void addLedsStateTransitions()
 {
-  ledsState->add_transition(&stateIdle, &stateFlashGreen, EV_LED_FLASH_GREEN, NULL);
-  ledsState->add_timed_transition(&stateFlashGreen, &stateIdle, FLASH_LENGTH_MS, NULL);
-  ledsState->add_transition(&stateFlashGreen, &stateDisconnected, EV_LED_DISCONNECTED, NULL);
+  // ledsState->add_transition(&stateIdle, &stateFlashGreen, EV_LED_FLASH_GREEN, NULL);
+  // ledsState->add_timed_transition(&stateFlashGreen, &stateIdle, FLASH_LENGTH_MS, NULL);
+  // ledsState->add_transition(&stateFlashGreen, &stateDisconnected, EV_LED_DISCONNECTED, NULL);
 
-  ledsState->add_transition(&stateIdle, &statePulseRed, EV_LED_PULSE_RED, NULL);
-  ledsState->add_transition(&statePulseRed, &stateIdle, EV_LED_CONNECTED, NULL);
-  ledsState->add_transition(&statePulseRed, &stateDisconnected, EV_LED_DISCONNECTED, NULL);
+  // ledsState->add_transition(&stateIdle, &statePulseRed, EV_LED_PULSE_RED, NULL);
+  // ledsState->add_transition(&statePulseRed, &stateIdle, EV_LED_CONNECTED, NULL);
+  // ledsState->add_transition(&statePulseRed, &stateDisconnected, EV_LED_DISCONNECTED, NULL);
 
   ledsState->add_transition(&stateDisconnected, &stateIdle, EV_LED_CONNECTED, NULL);
-  ledsState->add_transition(&stateIdle, &stateDisconnected, EV_LED_DISCONNECTED, NULL);
+  // ledsState->add_transition(&stateIdle, &stateDisconnected, EV_LED_DISCONNECTED, NULL);
 
-  ledsState->add_transition(&stateIdle, &stateSpinGreenFast, EV_LED_SPIN_GREEN_FAST, NULL);
-  ledsState->add_transition(&stateSpinGreenFast, &stateIdle, EV_LED_CONNECTED, NULL);
+  // ledsState->add_transition(&stateIdle, &stateSpinGreenFast, EV_LED_SPIN_GREEN_FAST, NULL);
+  // ledsState->add_transition(&stateSpinGreenFast, &stateIdle, EV_LED_CONNECTED, NULL);
 }
 
 void triggerLedsStateEvent(LedsStateEvent ev)

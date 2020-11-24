@@ -1,108 +1,107 @@
-#pragma once
+#ifndef DEBUG_HPP
+#define DEBUG_HPP
 
-/// @file
+// Uncomment this line to flush the output after each debug statement
+// #define FLUSH_ON_EVERY_DEBUG_STATEMENT
 
-#include <AH/Settings/Warnings.hpp>
-AH_DIAGNOSTIC_WERROR() // Enable errors on warnings
-
-#include <AH/PrintStream/PrintStream.hpp>
-#include <AH/Settings/SettingsWrapper.hpp>
-
-#ifndef FLUSH_ON_EVERY_DEBUG_STATEMENT
-#if !(defined(ESP32) || defined(ESP8266))
-
-/// Should the output stream be flushed after each debug statement?
-/// Enabling this feature can slow things down significantly, and is not
-/// supported on ESP32 / ESP8266.
-///
-/// @todo   I should probably use Streams instead of Prints, so Espressif boards
-///         can flush as well.
-#define FLUSH_ON_EVERY_DEBUG_STATEMENT 0
-
+#ifdef FLUSH_ON_EVERY_DEBUG_STATEMENT
+#define ENDL endl
 #else
-
-#define FLUSH_ON_EVERY_DEBUG_STATEMENT 0
-
+#define ENDL "\r\n"
 #endif
-#endif
-
-// :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
 #ifdef ARDUINO
 
-// Uncomment this line to override Arduino debug output
+// Uncomment this line to override Arduino IDE debug output
 // #define DEBUG_OUT Serial
 
-#else
-
-// Uncomment this line to override PC tests debug output
-// #define DEBUG_OUT std::cout
-
-#endif
-
-// :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
-#if FLUSH_ON_EVERY_DEBUG_STATEMENT
-#define DEBUG_ENDL endl
-#else
-#define DEBUG_ENDL "\r\n"
-#endif
-
-#if (defined(ESP32) || defined(ESP8266)) && FLUSH_ON_EVERY_DEBUG_STATEMENT
+#if (defined(ESP32) || defined(ESP8266)) && \
+    defined(FLUSH_ON_EVERY_DEBUG_STATEMENT)
 #error "ESP32 and ESP8266 don't support flushing `Print` objects"
 #endif
 
-// :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+#ifndef PRINTSTREAM_FALLBACK
+//#include <PrintStream.h>
+#else
+#include <Arduino.h> // Print
+typedef Print &manipulator(Print &);
+inline Print &endl(Print &printer)
+{
+    printer.println();
+#if !(defined(ESP32) || defined(ESP8266))
+    printer.flush();
+#endif
+    return printer;
+}
+template <class T>
+inline Print &operator<<(Print &printer, const T printable)
+{
+    printer.print(printable);
+    return printer;
+}
+template <>
+inline Print &operator<<(Print &printer, manipulator pf)
+{
+    return pf(printer);
+}
+#endif
 
-#define DEBUG_STR_HELPER(x) #x
-#define DEBUG_STR(x) DEBUG_STR_HELPER(x)
+#else // No Arduino
 
-#define DEBUG_FUNC_LOCATION                                                    \
-    '[' << __PRETTY_FUNCTION__ << F(" @ line " DEBUG_STR(__LINE__) "]:\t")
-#define DEBUG_LOCATION "[" __FILE__ ":" DEBUG_STR(__LINE__) "]:\t"
+#include <iomanip>
+#include <iostream>
+using std::boolalpha;
+using std::cout;
+using std::dec;
+using std::endl;
+using std::flush;
+using std::hex;
+using std::noboolalpha;
+using std::noshowbase;
+using std::nouppercase;
+using std::setbase;
+using std::setprecision;
+using std::showbase;
+using std::uppercase;
+#define F(x) (x)
 
-// :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+#endif
 
-/// Macro for printing an expression as a string, followed by its value.
-/// The expression string is saved in PROGMEM using the `F(...)` macro.
-/// @ingroup    AH_Debug
-#define NAMEDVALUE(x) F(DEBUG_STR(x) " = ") << x
+#define STR_HELPER(x) #x
+#define STR(x) STR_HELPER(x)
 
-#ifdef DEBUG_OUT // Debugging enabled ==========================================
+#define FUNC_LOCATION \
+    '[' << __PRETTY_FUNCTION__ << F(" @ line " STR(__LINE__) "]:\t")
+#define LOCATION "[" __FILE__ ":" STR(__LINE__) "]:\t"
 
-/// Print an expression to the debug output if debugging is enabled.
-/// @ingroup    AH_Debug
-#define DEBUG(x)                                                               \
-    do {                                                                       \
-        DEBUG_OUT << x << DEBUG_ENDL;                                          \
+#define NAMEDVALUE(x) F(STR(x) " = ") << x
+
+#ifdef DEBUG_OUT
+
+#pragma message("Debugging enabled on output " STR(DEBUG_OUT))
+
+#define DEBUG(x)                \
+    do                          \
+    {                           \
+        DEBUG_OUT << x << ENDL; \
     } while (0)
 
-/// Print an expression and its location (file and line number) to the debug
-/// output if debugging is enabled.
-/// The location is saved in PROGMEM using the `F(...)` macro.
-/// @ingroup    AH_Debug
-#define DEBUGREF(x)                                                            \
-    do {                                                                       \
-        DEBUG_OUT << F(DEBUG_LOCATION) << x << DEBUG_ENDL;                     \
+#define DEBUGREF(x)                            \
+    do                                         \
+    {                                          \
+        DEBUG_OUT << F(LOCATION) << x << ENDL; \
     } while (0)
 
-/// Print an expression and its function (function name and line number) to the
-/// debug output if debugging is enabled.
-/// The function name is saved in RAM.
-/// @ingroup    AH_Debug
-#define DEBUGFN(x)                                                             \
-    do {                                                                       \
-        DEBUG_OUT << DEBUG_FUNC_LOCATION << x << DEBUG_ENDL;                   \
+#define DEBUGFN(x)                               \
+    do                                           \
+    {                                            \
+        DEBUG_OUT << FUNC_LOCATION << x << ENDL; \
     } while (0)
 
 #ifdef ARDUINO
-
-/// Print an expression and the time since startup to the debug output if
-/// debugging is enabled.
-/// Format: `[hours:minutes:seconds.milliseconds]`
-/// @ingroup    AH_Debug
 #define DEBUGTIME(x)                                                           \
-    do {                                                                       \
+    do                                                                         \
+    {                                                                          \
         unsigned long t = millis();                                            \
         unsigned long h = t / (60UL * 60 * 1000);                              \
         unsigned long m = (t / (60UL * 1000)) % 60;                            \
@@ -110,64 +109,111 @@ AH_DIAGNOSTIC_WERROR() // Enable errors on warnings
         unsigned long ms = t % 1000;                                           \
         const char *ms_zeros = ms > 99 ? "" : (ms > 9 ? "0" : "00");           \
         DEBUG_OUT << '[' << h << ':' << m << ':' << s << '.' << ms_zeros << ms \
-                  << "]:\t" << x << DEBUG_ENDL;                                \
+                  << "]:\t" << x << ENDL;                                      \
+    } while (0)
+#endif
+
+#define DEBUGVAL(...)             \
+    DEBUGVALN(COUNT(__VA_ARGS__)) \
+    (__VA_ARGS__)
+
+#define DEBUGMVAL(msg, ...)                       \
+    {                                             \
+        Serial.printf("%s: ", (const char *)msg); \
+        DEBUGVAL(__VA_ARGS__);                    \
+    }
+
+#define COUNT(...) COUNT_HELPER(__VA_ARGS__, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1)
+#define COUNT_HELPER(N1, N2, N3, N4, N5, N6, N7, N8, N9, N10, N, ...) N
+
+#define DEBUGVALN(N) DEBUGVALN_HELPER(N)
+#define DEBUGVALN_HELPER(N) DEBUGVAL##N
+
+#define DEBUGVAL10(x, ...)                  \
+    do                                      \
+    {                                       \
+        DEBUG_OUT << NAMEDVALUE(x) << ", "; \
+        DEBUGVAL9(__VA_ARGS__);             \
+    } while (0)
+#define DEBUGVAL9(x, ...)                   \
+    do                                      \
+    {                                       \
+        DEBUG_OUT << NAMEDVALUE(x) << ", "; \
+        DEBUGVAL8(__VA_ARGS__);             \
+    } while (0)
+#define DEBUGVAL8(x, ...)                   \
+    do                                      \
+    {                                       \
+        DEBUG_OUT << NAMEDVALUE(x) << ", "; \
+        DEBUGVAL7(__VA_ARGS__);             \
+    } while (0)
+#define DEBUGVAL7(x, ...)                   \
+    do                                      \
+    {                                       \
+        DEBUG_OUT << NAMEDVALUE(x) << ", "; \
+        DEBUGVAL6(__VA_ARGS__);             \
+    } while (0)
+#define DEBUGVAL6(x, ...)                   \
+    do                                      \
+    {                                       \
+        DEBUG_OUT << NAMEDVALUE(x) << ", "; \
+        DEBUGVAL5(__VA_ARGS__);             \
+    } while (0)
+#define DEBUGVAL5(x, ...)                   \
+    do                                      \
+    {                                       \
+        DEBUG_OUT << NAMEDVALUE(x) << ", "; \
+        DEBUGVAL4(__VA_ARGS__);             \
+    } while (0)
+#define DEBUGVAL4(x, ...)                   \
+    do                                      \
+    {                                       \
+        DEBUG_OUT << NAMEDVALUE(x) << ", "; \
+        DEBUGVAL3(__VA_ARGS__);             \
+    } while (0)
+#define DEBUGVAL3(x, ...)                   \
+    do                                      \
+    {                                       \
+        DEBUG_OUT << NAMEDVALUE(x) << ", "; \
+        DEBUGVAL2(__VA_ARGS__);             \
+    } while (0)
+#define DEBUGVAL2(x, ...)                   \
+    do                                      \
+    {                                       \
+        DEBUG_OUT << NAMEDVALUE(x) << ", "; \
+        DEBUGVAL1(__VA_ARGS__);             \
+    } while (0)
+#define DEBUGVAL1(x)                        \
+    do                                      \
+    {                                       \
+        DEBUG_OUT << NAMEDVALUE(x) << ENDL; \
     } while (0)
 
-#else // !ARDUINO
+#else // Debugging disabled
 
-#include <chrono>
-
-BEGIN_AH_NAMESPACE
-extern const decltype(std::chrono::high_resolution_clock::now()) start_time;
-END_AH_NAMESPACE
-
-#define DEBUGTIME(x)                                                           \
-    do {                                                                       \
-        USING_AH_NAMESPACE;                                                    \
-        using namespace std::chrono;                                           \
-        auto now = high_resolution_clock::now();                               \
-        unsigned long t =                                                      \
-            duration_cast<milliseconds>(now - start_time).count();             \
-        unsigned long h = t / (60UL * 60 * 1000);                              \
-        unsigned long m = (t / (60UL * 1000)) % 60;                            \
-        unsigned long s = (t / (1000UL)) % 60;                                 \
-        unsigned long ms = t % 1000;                                           \
-        const char *ms_zeros = ms > 99 ? "" : (ms > 9 ? "0" : "00");           \
-        DEBUG_OUT << '[' << h << ':' << m << ':' << s << '.' << ms_zeros << ms \
-                  << "]:\t" << x << DEBUG_ENDL;                                \
+#define DEBUG(x) \
+    do           \
+    {            \
     } while (0)
-
-#endif // ARDUINO
-
-#include "DebugVal.hpp"
-
-/// Print multiple expressions and their values to the debug output if debugging
-/// is enabled.
-/// For example, `DEBUGVAL(1 + 1, digitalRead(2))` could print `1 + 1 = 2,
-/// digitalRead(2) = 0`.
-/// A maximum of 10 expressions is supported.
-/// The expression strings are saved in PROGMEM using the `F(...)` macro.
-/// @ingroup    AH_Debug
-#define DEBUGVAL(...) DEBUGVALN(COUNT(__VA_ARGS__))(__VA_ARGS__)
-
-#else // Debugging disabled ====================================================
-
-#define DEBUG(x)                                                               \
-    do {                                                                       \
+#define DEBUGREF(x) \
+    do              \
+    {               \
     } while (0)
-#define DEBUGREF(x)                                                            \
-    do {                                                                       \
+#define DEBUGFN(x) \
+    do             \
+    {              \
     } while (0)
-#define DEBUGFN(x)                                                             \
-    do {                                                                       \
+#ifdef ARDUINO
+#define DEBUGTIME(x) \
+    do               \
+    {                \
     } while (0)
-#define DEBUGTIME(x)                                                           \
-    do {                                                                       \
-    } while (0)
-#define DEBUGVAL(...)                                                          \
-    do {                                                                       \
+#endif
+#define DEBUGVAL(...) \
+    do                \
+    {                 \
     } while (0)
 
 #endif
 
-AH_DIAGNOSTIC_POP()
+#endif

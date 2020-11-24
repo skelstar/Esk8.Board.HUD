@@ -19,9 +19,18 @@ enum ReasonType
 
 enum PacketType
 {
-  CONTROL,
+  CONTROL = 0,
   CONFIG,
+  HUD,
 };
+
+const char *packetNames[] = {
+    "CONTROL",
+    "CONFIG",
+    "HUD",
+};
+
+//--------------------------------------------
 
 class VescData
 {
@@ -35,6 +44,8 @@ public:
   bool vescOnline;
   ReasonType reason;
 };
+
+//--------------------------------------------
 
 class ControllerData
 {
@@ -92,6 +103,15 @@ public:
 
 private:
   ControllerData _prev;
+};
+
+//--------------------------------------------
+
+class HUDData
+{
+public:
+  uint32_t id;
+  LedsStateEvent event;
 };
 
 #endif

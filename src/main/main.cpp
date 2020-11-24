@@ -2,111 +2,87 @@
 #define DEBUG_OUT Serial
 #endif
 #define PRINTSTREAM_FALLBACK
-#include <Arduino_Helpers.h>
+// #include <Arduino_Helpers.h>
 #include "Debug.hpp"
 
 #include <Arduino.h>
+#include <constants.h>
 #include <VescData.h>
 #include <elapsedMillis.h>
-
-#include <constants.h>
-
-#define COMMS_BOARD 00
-#define COMMS_CONTROLLER 01
-#define COMMS_HUD 02
-
-class Hud
-{
-public:
-  bool clientConnected;
-} hud;
+#include <NRF24L01Lib.h>
 
 //------------------------------------------------------------------
 
-#include <HUDData.h>
+NRF24L01Lib nrf24;
+
+RF24 radio(NRF_CE, NRF_CS);
+RF24Network network(radio);
+
+ControllerClass controller;
+HUDData hudData;
+
+//------------------------------------------------------------------
+
 #include <EventQueueManager.h>
 
 bool packetReady;
-HUDData hudData;
-
-xQueueHandle xLedsEventQueue;
-
-EventQueueManager *ledsQueueManager;
 
 #include <leds.h>
-LedDisplayClass *ledDisplay;
-
 #include <hudTask.h>
-#include <bleNotify.h>
-
-#define DOUBLECLICK_MS 300
-#define LONGCLICK_MS 1000
-
+#include <tasks/ledsTask.h>
 #include <Button2.h>
+#include <nrf_comms.h>
 
-Button2 button(39);
+Button2 button(BUTTON_PIN);
 
-#define BRIGHTNESS_LEVELS 4
-uint8_t brightnesses[BRIGHTNESS_LEVELS] = {10, 30, 100, 255};
-uint8_t brightnessIndex = 1;
+void buttonDoubleClickHandler(Button2 &btn)
+{
+  ledsQueueManager->send(EV_LED_CYCLE_BRIGHTNESS);
+}
 
-ControllerClass controller;
+void buttonTripleClickHandler(Button2 &btn)
+{
+  if (USE_DEEPSLEEP)
+  {
+    Serial.printf("Going to sleep!...");
+    delay(100);
+    esp_deep_sleep_start();
+  }
+}
 
 //-----------------------------------------------
 
 void setup()
 {
   Serial.begin(115200);
+  DEBUG("-----------------------------------------\n");
   Serial.printf("Esk8.Board.HUD ready!\n");
-
-  FastLED.setBrightness(brightnesses[brightnessIndex]);
-  FastLED.addLeds<NEOPIXEL, LED_PIN>(leds, NUM_LEDS);
-
-  ledDisplay = new LedDisplayClass();
-
-  ledDisplay->setLeds(CRGB::Black);
-
-  button.setTapHandler([](Button2 &btn) {
-    brightnessIndex++;
-    if (brightnessIndex == BRIGHTNESS_LEVELS)
-      brightnessIndex = 0;
-    FastLED.setBrightness(brightnesses[brightnessIndex]);
-    FastLED.show();
-  });
+  DEBUG("-----------------------------------------\n");
 
   if (USE_DEEPSLEEP)
     esp_sleep_enable_ext1_wakeup(GPIO_NUM_39, ESP_EXT1_WAKEUP_ALL_LOW);
 
-  button.setDoubleClickHandler([](Button2 &btn) {
-    sendDataToClient(EV_BTN_DOUBLE_CLICK);
-    Serial.printf("--> event %s\n", ButtonEventNames[(int)EV_BTN_DOUBLE_CLICK]);
-  });
+  button.setDoubleClickHandler(buttonDoubleClickHandler);
+  button.setTripleClickHandler(buttonTripleClickHandler);
 
-  button.setTripleClickHandler([](Button2 &btn) {
-    if (USE_DEEPSLEEP)
-    {
-      Serial.printf("Going to sleep!...");
-      delay(100);
-      esp_deep_sleep_start();
-    }
-  });
+  createLedsTask(CORE_1, TASK_PRIORITY_1);
 
-  // core 0
-  xTaskCreatePinnedToCore(ledTask_1, "ledTask_1", 10000, NULL, /*priority*/ 3, NULL, /*core*/ 1);
-
-  xLedsEventQueue = xQueueCreate(/*len*/ 5, sizeof(uint8_t));
-
-  ledsQueueManager = new EventQueueManager(xLedsEventQueue, /*ticks*/ 5);
-
-  setupBLE();
+  nrf24.begin(&radio, &network, COMMS_HUD, packetAvailable_cb);
+  DEBUG("-----------------------------------------\n\n");
 }
 //-----------------------------------------------
 
-elapsedMillis sincePulse, sinceSentToClient;
+elapsedMillis sincePulse, sinceSentToClient, sinceCheckedNRF;
 
 void loop()
 {
   button.loop();
+
+  if (sinceCheckedNRF > 100)
+  {
+    sinceCheckedNRF = 0;
+    nrf24.update();
+  }
 
   delay(10);
 }

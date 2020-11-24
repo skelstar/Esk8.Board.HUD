@@ -12,6 +12,10 @@ enum LedSection
   BOTTOM_RIGHT
 };
 
+#define BRIGHTNESS_LEVELS 4
+uint8_t brightnesses[BRIGHTNESS_LEVELS] = {10, 30, 100, 255};
+uint8_t brightnessIndex = 1;
+
 CRGB leds[NUM_LEDS];
 
 // 00 01 02 03 04
@@ -41,46 +45,38 @@ const uint8_t clockwisePerimeter[] = {0, 1, 2, 3, 4, 9, 14, 19, 24, 23, 22, 21, 
 const uint8_t clockwiseInnerPerimeter[] = {6, 7, 8, 13, 18, 17, 16, 11};
 #define NUM_INNER_PERIMETER_LEDS 7
 
-class LedDisplayClass
+//--------------------------------------------
+class LedBaseClass
 {
 public:
+  virtual void animation(CRGB colour) = 0;
+
+  void cycleBrightness()
+  {
+    brightnessIndex++;
+    if (brightnessIndex == BRIGHTNESS_LEVELS)
+      brightnessIndex = 0;
+    FastLED.setBrightness(brightnesses[brightnessIndex]);
+    FastLED.show();
+  }
   void setLeds(CRGB colour)
   {
     for (int num = 0; num < NUM_LEDS; num++)
     {
       leds[num] = colour;
     }
+    leds[0] = colour;
     FastLED.show();
   }
 
-  void setSection(LedSection section, CRGB colour)
-  {
-    for (int num = 0; num < NUM_LEDS; num++)
-    {
-      switch (section)
-      {
-      case BOARD:
-        if (num == 3 || num == 4 || num == 8 || num == 9)
-          leds[num] = colour;
-        break;
-      case CONNECTION:
-        if (num == 0 || num == 1 || num == 5 || num == 6)
-          leds[num] = colour;
-        break;
-      case BOTTOM_LEFT:
-        if (num == 15 || num == 16 || num == 20 || num == 21)
-          leds[num] = colour;
-        break;
-      case BOTTOM_RIGHT:
-        if (num == 18 || num == 19 || num == 23 || num == 24)
-          leds[num] = colour;
-        break;
-      }
-    }
-    FastLED.show();
-  }
-
-  void spinClockwise(CRGB colour)
+protected:
+  uint8_t _walkIdx = 0, _walkIdx2 = -1, _walkIdx3 = -2;
+};
+//--------------------------------------------
+class MatrixLedClass : public LedBaseClass
+{
+public:
+  void animation(CRGB colour)
   {
     for (int i = 0; i < NUM_LEDS; i++)
     {
@@ -108,47 +104,39 @@ public:
     _walkIdx = _walkIdx > NUM_INNER_PERIMETER_LEDS - 1 ? 0 : _walkIdx + 1;
     FastLED.show();
   }
-
-  void setPatternLeds(const uint8_t pattern[5][5], CRGB colour)
-  {
-    for (uint8_t x = 0; x < 5; x++)
-    {
-      for (int y = 0; y < 5; y++)
-      {
-        uint8_t num = x * 5 + y;
-        leds[num] = pattern[x][y] == 1 ? colour : CRGB::Black;
-      }
-    }
-    FastLED.show();
-  }
-
-  void setMiddleLeds(LedSection section, CRGB colour)
-  {
-    for (int num = 0; num < NUM_LEDS; num++)
-    {
-      switch (section)
-      {
-      case BOARD:
-        if (num == 3 || num == 4 || num == 8 || num == 9)
-          leds[num] = colour;
-        break;
-      case CONNECTION:
-        if (num == 0 || num == 1 || num == 5 || num == 6)
-          leds[num] = colour;
-        break;
-      case BOTTOM_LEFT:
-        if (num == 15 || num == 16 || num == 20 || num == 21)
-          leds[num] = colour;
-        break;
-      case BOTTOM_RIGHT:
-        if (num == 18 || num == 19 || num == 23 || num == 24)
-          leds[num] = colour;
-        break;
-      }
-    }
-    FastLED.show();
-  }
-
-private:
-  uint8_t _walkIdx = 0, _walkIdx2 = -1, _walkIdx3 = -2;
 };
+
+class StripLedClass : public LedBaseClass
+{
+public:
+  void animation(CRGB colour)
+  {
+    for (int i = 0; i < NUM_PIXELS; i++)
+    {
+      if (i == _walkIdx)
+      {
+        leds[i] = colour;
+      }
+      else if (i == _walkIdx2)
+      {
+        leds[i] = colour;
+        leds[i].fadeLightBy(80);
+      }
+      else if (i == _walkIdx3)
+      {
+        leds[i] = colour;
+        leds[i].fadeLightBy(150);
+      }
+      else
+      {
+        leds[i] = CRGB::Black;
+      }
+    }
+    _walkIdx3 = _walkIdx2;
+    _walkIdx2 = _walkIdx;
+    _walkIdx = _walkIdx > NUM_PIXELS - 1 ? 0 : _walkIdx + 1;
+    FastLED.show();
+  }
+};
+
+StripLedClass *ledDisplay;
