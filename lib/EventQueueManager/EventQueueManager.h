@@ -9,12 +9,14 @@
 
 class EventQueueManager
 {
+  typedef void (*QueueManagerSentCallback)(uint8_t ev);
 
 public:
   EventQueueManager(QueueHandle_t queue, TickType_t ticks)
   {
     _queue = queue;
     _ticks = ticks;
+    _sentCallback = NULL;
   }
 
   /// send event T to the queue
@@ -23,7 +25,11 @@ public:
   {
     uint8_t e = (uint8_t)ev;
     if (_queue != NULL)
+    {
       xQueueSendToBack(_queue, &e, _ticks);
+      if (_sentCallback != NULL)
+        _sentCallback(e);
+    }
   }
 
   bool messageAvailable()
@@ -48,10 +54,16 @@ public:
     return (T)_lastEvent;
   }
 
+  void setSentEventCallback(QueueManagerSentCallback cb)
+  {
+    _sentCallback = cb;
+  }
+
 private:
   uint8_t _lastEvent = 0;
   QueueHandle_t _queue = NULL;
   TickType_t _ticks = 10;
+  QueueManagerSentCallback _sentCallback;
 };
 
 #endif
