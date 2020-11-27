@@ -7,6 +7,7 @@
 
 #include <Arduino.h>
 #include <types.h>
+#include <shared-utils.h>
 #include <constants.h>
 #include <VescData.h>
 #include <elapsedMillis.h>
@@ -29,7 +30,7 @@ bool packetReady;
 
 #include <leds.h>
 #include <hudState.h>
-#include <tasks/ledsTask.h>
+#include <tasks/hudStateTask.h>
 #include <Button2.h>
 #include <nrf_comms.h>
 
@@ -57,6 +58,12 @@ void buttonTripleClickHandler(Button2 &btn)
   {
     sendActionToController(HUD_ACTION_TRIPLE_CLICK);
   }
+}
+
+//-----------------------------------------------
+void asserts()
+{
+  assertEnum("LedsStateEvent", LedsStateEvent::EV_LED_Length, ARRAY_SIZE(ledStateEventNames));
 }
 
 //-----------------------------------------------

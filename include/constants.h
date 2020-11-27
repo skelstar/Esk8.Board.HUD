@@ -1,4 +1,6 @@
-
+#ifndef SHARED_UTILS_H
+#include <shared-utils.h>
+#endif
 
 enum LedsStateEvent
 {
@@ -9,6 +11,7 @@ enum LedsStateEvent
   EV_LED_DISCONNECTED,
   EV_LED_IDLE,
   EV_LED_CYCLE_BRIGHTNESS,
+  EV_LED_Length
 };
 
 const char *ledStateEventNames[] = {
