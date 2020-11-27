@@ -6,6 +6,7 @@
 #include "Debug.hpp"
 
 #include <Arduino.h>
+#include <types.h>
 #include <constants.h>
 #include <VescData.h>
 #include <elapsedMillis.h>
@@ -19,7 +20,6 @@ RF24 radio(NRF_CE, NRF_CS);
 RF24Network network(radio);
 
 ControllerClass controller;
-HUDData hudData;
 
 //------------------------------------------------------------------
 
@@ -28,16 +28,21 @@ HUDData hudData;
 bool packetReady;
 
 #include <leds.h>
-#include <hudTask.h>
+#include <hudState.h>
 #include <tasks/ledsTask.h>
 #include <Button2.h>
 #include <nrf_comms.h>
 
 Button2 button(BUTTON_PIN);
 
+void buttonPressedHandler(Button2 &btn)
+{
+  hudStateQueue->send(HUD_CMD_CYCLE_BRIGHTNESS);
+}
+
 void buttonDoubleClickHandler(Button2 &btn)
 {
-  ledsQueueManager->send(EV_LED_CYCLE_BRIGHTNESS);
+  sendActionToController(HUD_ACTION_DOUBLE_CLICK);
 }
 
 void buttonTripleClickHandler(Button2 &btn)
@@ -47,6 +52,10 @@ void buttonTripleClickHandler(Button2 &btn)
     Serial.printf("Going to sleep!...");
     delay(100);
     esp_deep_sleep_start();
+  }
+  else
+  {
+    sendActionToController(HUD_ACTION_TRIPLE_CLICK);
   }
 }
 
@@ -62,6 +71,7 @@ void setup()
   if (USE_DEEPSLEEP)
     esp_sleep_enable_ext1_wakeup(GPIO_NUM_39, ESP_EXT1_WAKEUP_ALL_LOW);
 
+  button.setPressedHandler(buttonPressedHandler);
   button.setDoubleClickHandler(buttonDoubleClickHandler);
   button.setTripleClickHandler(buttonTripleClickHandler);
 
@@ -69,10 +79,12 @@ void setup()
 
   nrf24.begin(&radio, &network, COMMS_HUD, packetAvailable_cb);
   DEBUG("-----------------------------------------\n\n");
+
+  sendActionToController(HUD_ACTION_HEARTBEAT);
 }
 //-----------------------------------------------
 
-elapsedMillis sincePulse, sinceSentToClient, sinceCheckedNRF;
+elapsedMillis sincePulse, sinceSentToClient, sinceCheckedNRF, sinceState1;
 
 void loop()
 {

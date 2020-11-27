@@ -37,6 +37,7 @@ const char *ButtonEventNames[] = {
     "EV_BTN_DOUBLE_CLICK",
 };
 
+#define LED_FLASH_LENGTH_MS 300
 #define LED_SPIN_SPEED_MED_MS 200
 #define LED_SPIN_SPEED_FAST_MS 60
 

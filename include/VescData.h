@@ -17,19 +17,6 @@ enum ReasonType
   RESPONSE,
 };
 
-enum PacketType
-{
-  CONTROL = 0,
-  CONFIG,
-  HUD,
-};
-
-const char *packetNames[] = {
-    "CONTROL",
-    "CONFIG",
-    "HUD",
-};
-
 //--------------------------------------------
 
 class VescData
@@ -69,6 +56,7 @@ public:
   ControllerData data;
   ControllerConfig config;
   elapsedMillis sinceLastPacket;
+  bool connected = false;
 
   void save(ControllerData latest)
   {
@@ -95,10 +83,9 @@ public:
     return data.throttle != _prev.throttle;
   }
 
-  bool hasTimedout(elapsedMillis lastPacketTime)
+  bool hasTimedout()
   {
-    return config.send_interval > 0 &&
-           lastPacketTime > config.send_interval + 100;
+    return sinceLastPacket > CONTROLLER_CONNECTED_INTERVAL;
   }
 
 private:
@@ -111,7 +98,7 @@ class HUDData
 {
 public:
   uint32_t id;
-  LedsStateEvent event;
+  HUDCommand event;
 };
 
 #endif

@@ -9,17 +9,16 @@
 
 //---------------------------------------------
 
-void addLedsStateTransitions();
+void addHudStateTransitions();
 void printState(char *text);
 
 const unsigned long FLASH_LENGTH_MS = 1000;
 elapsedMillis sinceStartedCycle,
     sinceStartedPulseRed,
     sinceUpdatedWipe,
+    sinceStartedFlash,
     sinceReadQueue;
 bool pulseRedOn;
-
-Fsm *ledsState;
 
 //---------------------------------------------
 
@@ -30,6 +29,13 @@ State stateIdle(
     },
     [] {},
     [] {});
+
+State stateFlashGreen(
+    [] {
+      printState("stateFlashGreen");
+      ledDisplay->setLeds(CRGB::DarkGreen);
+    },
+    NULL, NULL);
 
 State statePulseRed(
     [] {
@@ -49,9 +55,9 @@ State statePulseRed(
       ledDisplay->setLeds(CRGB::Black);
     });
 
-State stateSpinGreenFast(
+State stateSpinGreen(
     [] {
-      printState("stateSpinGreenFast");
+      printState("stateSpinGreen");
       sinceUpdatedWipe = 0;
     },
     [] {
@@ -61,16 +67,6 @@ State stateSpinGreenFast(
         ledDisplay->animation(CRGB::DarkGreen);
       }
     },
-    [] {
-      ledDisplay->setLeds(CRGB::Black);
-    });
-
-State stateFlashGreen(
-    [] {
-      printState("stateFlashGreen");
-      ledDisplay->setLeds(CRGB::DarkGreen);
-    },
-    NULL,
     [] {
       ledDisplay->setLeds(CRGB::Black);
     });
@@ -89,36 +85,29 @@ State stateDisconnected(
     },
     [] {});
 
-//---------------------------------------------
-
-void printEventCb(int ev)
+void sendConnected()
 {
-  Serial.printf("--> event: %s\n", ledStateEventNames[ev]);
+  uint8_t d = (HudActionEvent::HUD_ACTION_HEARTBEAT);
+  nrf24.send(COMMS_CONTROLLER, HUD, &d, sizeof(uint8_t));
 }
 
-void addLedsStateTransitions()
+Fsm hudFsm(&stateDisconnected);
+
+void addHudStateTransitions()
 {
-  // ledsState->add_transition(&stateIdle, &stateFlashGreen, EV_LED_FLASH_GREEN, NULL);
-  // ledsState->add_timed_transition(&stateFlashGreen, &stateIdle, FLASH_LENGTH_MS, NULL);
-  // ledsState->add_transition(&stateFlashGreen, &stateDisconnected, EV_LED_DISCONNECTED, NULL);
+  hudFsm.add_transition(&stateDisconnected, &stateIdle, HUD_CMD_HEARTBEAT, sendConnected);
+  hudFsm.add_transition(&stateIdle, &stateDisconnected, HUD_CMD_DISCONNECTED, NULL);
 
-  // ledsState->add_transition(&stateIdle, &statePulseRed, EV_LED_PULSE_RED, NULL);
-  // ledsState->add_transition(&statePulseRed, &stateIdle, EV_LED_CONNECTED, NULL);
-  // ledsState->add_transition(&statePulseRed, &stateDisconnected, EV_LED_DISCONNECTED, NULL);
+  hudFsm.add_transition(&stateIdle, &stateFlashGreen, HUD_CMD_FLASH_GREEN, NULL);
+  hudFsm.add_timed_transition(&stateFlashGreen, &stateIdle, LED_FLASH_LENGTH_MS, NULL);
+  hudFsm.add_transition(&stateFlashGreen, &stateDisconnected, HUD_CMD_DISCONNECTED, NULL);
 
-  ledsState->add_transition(&stateDisconnected, &stateIdle, EV_LED_CONNECTED, NULL);
-  // ledsState->add_transition(&stateIdle, &stateDisconnected, EV_LED_DISCONNECTED, NULL);
+  hudFsm.add_transition(&stateIdle, &statePulseRed, HUD_CMD_PULSE_RED, NULL);
+  hudFsm.add_transition(&statePulseRed, &stateIdle, HUD_CMD_IDLE, NULL);
+  hudFsm.add_transition(&statePulseRed, &stateDisconnected, HUD_CMD_DISCONNECTED, NULL);
 
-  // ledsState->add_transition(&stateIdle, &stateSpinGreenFast, EV_LED_SPIN_GREEN_FAST, NULL);
-  // ledsState->add_transition(&stateSpinGreenFast, &stateIdle, EV_LED_CONNECTED, NULL);
-}
-
-void triggerLedsStateEvent(LedsStateEvent ev)
-{
-  ledsState->trigger(ev);
-#ifdef PRINT_LED_READ_TRIGGER
-  Serial.printf("ledState rx trigger: %s\n", ledStateEventNames[(int)ev]);
-#endif
+  hudFsm.add_transition(&stateIdle, &stateSpinGreen, HUD_CMD_SPIN_GREEN, NULL);
+  hudFsm.add_transition(&stateSpinGreen, &stateIdle, HUD_CMD_IDLE, NULL);
 }
 
 void printState(char *text)

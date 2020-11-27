@@ -2,9 +2,9 @@
 #include <Arduino.h>
 #endif
 
-EventQueueManager *ledsQueueManager;
+EventQueueManager *hudStateQueue;
 
-xQueueHandle xLedsEventQueue;
+xQueueHandle xHudEventQueue;
 
 void ledTask_1(void *pvParameters)
 {
@@ -13,39 +13,46 @@ void ledTask_1(void *pvParameters)
   FastLED.setBrightness(brightnesses[brightnessIndex]);
   FastLED.addLeds<NEOPIXEL, LED_PIN>(leds, NUM_LEDS);
 
-  xLedsEventQueue = xQueueCreate(/*len*/ 5, sizeof(uint8_t));
-  ledsQueueManager = new EventQueueManager(xLedsEventQueue, /*ticks*/ 5);
+  xHudEventQueue = xQueueCreate(/*len*/ 5, sizeof(uint8_t));
+  hudStateQueue = new EventQueueManager(xHudEventQueue, /*ticks*/ 5);
+  hudStateQueue->setSentEventCallback([](uint8_t ev) {
+    Serial.printf("-->hudStateQueue->send: (%s)\n", hudCommandNames[ev]);
+  });
+  hudStateQueue->setReadEventCallback([](uint8_t ev) {
+    Serial.printf("<--hudStateQueue->read: (%s)\n", hudCommandNames[ev]);
+  });
 
   ledDisplay = new StripLedClass();
 
   ledDisplay->setLeds(CRGB::Blue);
 
-  ledsState = new Fsm(&stateDisconnected);
-  ledsState->setEventTriggeredCb(printEventCb);
-  addLedsStateTransitions();
+  hudFsm.setEventTriggeredCb([](int ev) {
+    Serial.printf("-->hudFsm.event: %s\n", hudCommandNames[ev]);
+  });
+  addHudStateTransitions();
 
   while (true)
   {
     vTaskDelay(10);
 
-    if (sinceReadQueue > 500)
+    if (sinceReadQueue > 100)
     {
       sinceReadQueue = 0;
-      if (ledsQueueManager->messageAvailable())
+      if (hudStateQueue->messageAvailable())
       {
-        LedsStateEvent ev = (LedsStateEvent)ledsQueueManager->read();
+        HUDCommand ev = (HUDCommand)hudStateQueue->read();
         switch (ev)
         {
-        case EV_LED_CYCLE_BRIGHTNESS:
+        case HUD_CMD_CYCLE_BRIGHTNESS:
           ledDisplay->cycleBrightness();
           break;
         default:
-          ledsState->trigger(ev);
+          hudFsm.trigger(ev);
         };
       }
     }
 
-    ledsState->run_machine();
+    hudFsm.run_machine();
   }
   vTaskDelete(NULL);
 }

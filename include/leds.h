@@ -12,8 +12,8 @@ enum LedSection
   BOTTOM_RIGHT
 };
 
-#define BRIGHTNESS_LEVELS 4
-uint8_t brightnesses[BRIGHTNESS_LEVELS] = {10, 30, 100, 255};
+#define NUM_BRIGHTNESS_LEVELS 4
+uint8_t brightnesses[NUM_BRIGHTNESS_LEVELS] = {10, 30, 100, 255};
 uint8_t brightnessIndex = 1;
 
 CRGB leds[NUM_LEDS];
@@ -54,11 +54,13 @@ public:
   void cycleBrightness()
   {
     brightnessIndex++;
-    if (brightnessIndex == BRIGHTNESS_LEVELS)
+    if (brightnessIndex == NUM_BRIGHTNESS_LEVELS)
       brightnessIndex = 0;
     FastLED.setBrightness(brightnesses[brightnessIndex]);
     FastLED.show();
+    Serial.printf("brightness now %d\n", brightnesses[brightnessIndex]);
   }
+
   void setLeds(CRGB colour)
   {
     for (int num = 0; num < NUM_LEDS; num++)
@@ -73,6 +75,7 @@ protected:
   uint8_t _walkIdx = 0, _walkIdx2 = -1, _walkIdx3 = -2;
 };
 //--------------------------------------------
+
 class MatrixLedClass : public LedBaseClass
 {
 public:
@@ -105,6 +108,7 @@ public:
     FastLED.show();
   }
 };
+//--------------------------------------------
 
 class StripLedClass : public LedBaseClass
 {
