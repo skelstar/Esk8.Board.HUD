@@ -6,9 +6,9 @@ EventQueueManager *hudStateQueue;
 
 xQueueHandle xHudEventQueue;
 
-void ledTask_1(void *pvParameters)
+void hudStateTask_1(void *pvParameters)
 {
-  Serial.printf("ledTask_1 running on core %d\n", xPortGetCoreID());
+  Serial.printf("hudStateTask_1 running on core %d\n", xPortGetCoreID());
 
   FastLED.setBrightness(brightnesses[brightnessIndex]);
   FastLED.addLeds<NEOPIXEL, LED_PIN>(leds, NUM_LEDS);
@@ -60,8 +60,8 @@ void ledTask_1(void *pvParameters)
 void createLedsTask(uint8_t core, uint8_t priority)
 {
   xTaskCreatePinnedToCore(
-      ledTask_1,
-      "ledTask_1",
+      hudStateTask_1,
+      "hudStateTask_1",
       10000,
       NULL,
       priority, NULL, core);
