@@ -35,16 +35,19 @@ Button2 button(BUTTON_PIN);
 
 void buttonPressedHandler(Button2 &btn)
 {
-  hudStateQueue->send(HUDSpecialEvents::CYCLE_BRIGHTNESS);
+  using HUDAction::Event;
+  sendActionToController(HUDAction::ONE_CLICK);
 }
 
 void buttonDoubleClickHandler(Button2 &btn)
 {
-  sendActionToController(HUDAction::DBLE_CLICK);
+  using HUDAction::Event;
+  sendActionToController(HUDAction::TWO_CLICK);
 }
 
 void buttonTripleClickHandler(Button2 &btn)
 {
+  using HUDAction::Event;
   if (USE_DEEPSLEEP)
   {
     Serial.printf("Going to sleep!...");
@@ -53,7 +56,7 @@ void buttonTripleClickHandler(Button2 &btn)
   }
   else
   {
-    sendActionToController(HUDAction::TRPLE_CLICK);
+    sendActionToController(HUDAction::THREE_CLICK);
   }
 }
 
@@ -80,7 +83,7 @@ void setup()
   if (USE_DEEPSLEEP)
     esp_sleep_enable_ext1_wakeup(GPIO_NUM_39, ESP_EXT1_WAKEUP_ALL_LOW);
 
-  button.setPressedHandler(buttonPressedHandler);
+  button.setClickHandler(buttonPressedHandler);
   button.setDoubleClickHandler(buttonDoubleClickHandler);
   button.setTripleClickHandler(buttonTripleClickHandler);
 

@@ -137,6 +137,8 @@ public:
     }
   }
 
+  uint8_t numFlashes = 0;
+
 protected:
   uint8_t _walkIdx = 0, _walkIdx2 = -1, _walkIdx3 = -2;
   CRGB _colour = CRGB::Black;

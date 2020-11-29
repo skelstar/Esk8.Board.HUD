@@ -128,3 +128,6 @@ void assertHUDSpecialEvents()
 #ifndef PRINT_PACKET_RX
 #define PRINT_PACKET_RX 0
 #endif
+#ifndef PRINT_SEND_ACTION
+#define PRINT_SEND_ACTION 0
+#endif
