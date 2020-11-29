@@ -26,7 +26,7 @@ ControllerClass controller;
 //------------------------------------------------------------------
 
 #include <leds.h>
-#include <hudState.h>
+#include <hudFsm.h>
 #include <tasks/hudStateTask.h>
 #include <Button2.h>
 #include <nrf_comms.h>
