@@ -82,6 +82,32 @@ public:
     FastLED.show();
   }
 
+  HUDCommand::Speed getSpeed()
+  {
+    return _speed;
+  }
+
+  void setSpeed(HUDCommand::Speed speed)
+  {
+    _speed = speed;
+  }
+
+  unsigned long getSpeedInterval()
+  {
+    switch (_speed)
+    {
+    case HUDCommand::SLOW:
+      return 1000;
+    case HUDCommand::MED:
+      return 600;
+    case HUDCommand::FAST:
+      return 150;
+    default:
+      Serial.printf("WARNING: NO_SPEED was selected\n");
+      return 0;
+    }
+  }
+
   CRGB getColour()
   {
     return _colour;
@@ -119,6 +145,7 @@ public:
 protected:
   uint8_t _walkIdx = 0, _walkIdx2 = -1, _walkIdx3 = -2;
   CRGB _colour = CRGB::Black;
+  HUDCommand::Speed _speed;
 };
 //--------------------------------------------
 

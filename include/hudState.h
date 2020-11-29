@@ -11,6 +11,7 @@
 
 void addHudStateTransitions();
 void printState(char *text);
+void sneakyTrigger(uint8_t event);
 
 elapsedMillis sinceStartedCycle,
     sinceStartedPulse,
@@ -34,8 +35,14 @@ State stateFlash(
     [] {
       printState("stateFlash");
       ledDisplay->setLeds();
+      sinceStartedFlash = 0;
     },
-    NULL, NULL);
+    [] {
+      ulong interval = ledDisplay->getSpeedInterval();
+      if (sinceStartedFlash > interval)
+        sneakyTrigger((int)HUDCommand::MODE_NONE);
+    },
+    NULL);
 
 State statePulse(
     [] {
@@ -46,7 +53,8 @@ State statePulse(
       origColour = ledDisplay->getColour();
     },
     [] {
-      if (sinceStartedPulse > LED_PULSE_SPEED_MS)
+      ulong interval = ledDisplay->getSpeedInterval();
+      if (sinceStartedPulse > interval)
       {
         sinceStartedPulse = 0;
         pulseOn = !pulseOn;
@@ -102,7 +110,8 @@ void addHudStateTransitions()
   hudFsm.add_transition(&stateIdle, &stateDisconnected, HUDSpecialEvents::DISCONNECTED, NULL);
 
   hudFsm.add_transition(&stateIdle, &stateFlash, HUDCommand::FLASH, NULL);
-  hudFsm.add_timed_transition(&stateFlash, &stateIdle, LED_FLASH_LENGTH_MS, NULL);
+  hudFsm.add_transition(&stateFlash, &stateIdle, HUDCommand::MODE_NONE, NULL);
+  // hudFsm.add_timed_transition(&stateFlash, &stateIdle, ledDisplay->getSpeedInterval(), NULL);
   hudFsm.add_transition(&stateFlash, &stateDisconnected, HUDSpecialEvents::DISCONNECTED, NULL);
 
   hudFsm.add_transition(&stateIdle, &statePulse, HUDCommand::PULSE, NULL);
@@ -118,4 +127,9 @@ void printState(char *text)
 #ifdef PRINT_LED_STATE
   Serial.printf("-----------------------ledState: %s\n", text);
 #endif
+}
+
+void sneakyTrigger(uint8_t event)
+{
+  hudFsm.trigger(event);
 }

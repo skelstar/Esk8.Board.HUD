@@ -1,4 +1,4 @@
-#ifndef SHARED_UTILS_H
+#ifndef ESK8_SHARED_UTILS_H
 #include <shared-utils.h>
 #endif
 

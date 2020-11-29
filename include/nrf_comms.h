@@ -22,11 +22,14 @@ void packetAvailable_cb(uint16_t from_id, uint8_t type)
     ControllerCommand command = readFromNrf<ControllerCommand>();
 
     ledDisplay->setColour(command.colour);
+    ledDisplay->setSpeed(command.speed);
+
     hudStateQueue->send(command.mode);
     if (PRINT_PACKET_RX)
-      Serial.printf("-->rx: %s:%s\n",
+      Serial.printf("-->rx: %s|%s|%s\n",
                     HUDCommand::modeNames[(int)command.mode],
-                    HUDCommand::colourName[(int)command.colour]);
+                    HUDCommand::colourName[(int)command.colour],
+                    HUDCommand::speed[(int)command.speed]);
   }
   else
   {

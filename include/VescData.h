@@ -100,13 +100,15 @@ public:
   uint32_t id;
   HUDCommand::Mode mode;
   HUDCommand::Colour colour;
+  HUDCommand::Speed speed;
 
-  ControllerCommand() {}
+  ControllerCommand(){};
 
-  ControllerCommand(HUDCommand::Mode mode, HUDCommand::Colour colour)
+  ControllerCommand(HUDCommand::Mode m, HUDCommand::Colour c, HUDCommand::Speed spd)
   {
-    mode = mode;
-    colour = colour;
+    mode = m;
+    colour = c;
+    speed = spd;
   }
 };
 
