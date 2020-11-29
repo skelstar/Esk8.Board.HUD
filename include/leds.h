@@ -49,7 +49,7 @@ const uint8_t clockwiseInnerPerimeter[] = {6, 7, 8, 13, 18, 17, 16, 11};
 class LedBaseClass
 {
 public:
-  virtual void animation(CRGB colour) = 0;
+  virtual void animation() = 0;
 
   void cycleBrightness()
   {
@@ -61,40 +61,86 @@ public:
     Serial.printf("brightness now %d\n", brightnesses[brightnessIndex]);
   }
 
-  void setLeds(CRGB colour)
+  void setLeds()
   {
     for (int num = 0; num < NUM_LEDS; num++)
     {
-      leds[num] = colour;
+      leds[num] = _colour;
     }
-    leds[0] = colour;
+    leds[0] = _colour;
     FastLED.show();
+  }
+
+  void setLeds(CRGB colour)
+  {
+    _colour = colour;
+    for (int num = 0; num < NUM_LEDS; num++)
+    {
+      leds[num] = _colour;
+    }
+    leds[0] = _colour;
+    FastLED.show();
+  }
+
+  CRGB getColour()
+  {
+    return _colour;
+  }
+
+  void setColour(CRGB colour)
+  {
+    _colour = colour;
+  }
+
+  void setColour(HUDCommand::Colour colour)
+  {
+    switch (colour)
+    {
+    case HUDCommand::RED:
+      _colour = CRGB::Red;
+      break;
+    case HUDCommand::GREEN:
+      _colour = CRGB::Green;
+      break;
+    case HUDCommand::YELLOW:
+      _colour = CRGB::Yellow;
+      break;
+    case HUDCommand::BLUE:
+      _colour = CRGB::Blue;
+      break;
+    case HUDCommand::WHITE:
+      _colour = CRGB::White;
+      break;
+    default:
+      _colour = CRGB::Black;
+    }
   }
 
 protected:
   uint8_t _walkIdx = 0, _walkIdx2 = -1, _walkIdx3 = -2;
+  CRGB _colour = CRGB::Black;
 };
 //--------------------------------------------
 
 class MatrixLedClass : public LedBaseClass
 {
 public:
-  void animation(CRGB colour)
+  void animation()
   {
     for (int i = 0; i < NUM_LEDS; i++)
     {
       if (i == clockwiseInnerPerimeter[_walkIdx])
       {
-        leds[i] = colour;
+        leds[i] = _colour;
       }
       else if (i == clockwiseInnerPerimeter[_walkIdx2])
       {
-        leds[i] = colour;
+        leds[i] = _colour;
         leds[i].fadeLightBy(80);
       }
       else if (i == clockwiseInnerPerimeter[_walkIdx3])
       {
-        leds[i] = colour;
+        leds[i] = _colour;
         leds[i].fadeLightBy(150);
       }
       else
@@ -113,22 +159,22 @@ public:
 class StripLedClass : public LedBaseClass
 {
 public:
-  void animation(CRGB colour)
+  void animation()
   {
     for (int i = 0; i < NUM_PIXELS; i++)
     {
       if (i == _walkIdx)
       {
-        leds[i] = colour;
+        leds[i] = _colour;
       }
       else if (i == _walkIdx2)
       {
-        leds[i] = colour;
+        leds[i] = _colour;
         leds[i].fadeLightBy(80);
       }
       else if (i == _walkIdx3)
       {
-        leds[i] = colour;
+        leds[i] = _colour;
         leds[i].fadeLightBy(150);
       }
       else

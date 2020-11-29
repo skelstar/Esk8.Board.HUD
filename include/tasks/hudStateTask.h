@@ -2,7 +2,7 @@
 #include <Arduino.h>
 #endif
 
-EventQueueManager *hudStateQueue;
+QueueManager *hudStateQueue;
 
 xQueueHandle xHudEventQueue;
 
@@ -14,12 +14,14 @@ void hudStateTask_1(void *pvParameters)
   FastLED.addLeds<NEOPIXEL, LED_PIN>(leds, NUM_LEDS);
 
   xHudEventQueue = xQueueCreate(/*len*/ 5, sizeof(uint8_t));
-  hudStateQueue = new EventQueueManager(xHudEventQueue, /*ticks*/ 5);
+  hudStateQueue = new QueueManager(xHudEventQueue, /*ticks*/ 5);
   hudStateQueue->setSentEventCallback([](uint8_t ev) {
-    Serial.printf("-->hudStateQueue->send: (%s)\n", hudCommandNames[ev]);
+    if (PRINT_QUEUE_SEND)
+      Serial.printf("-->hudStateQueue->send: (%s)\n", HUDCommand::modeNames[ev]);
   });
   hudStateQueue->setReadEventCallback([](uint8_t ev) {
-    Serial.printf("<--hudStateQueue->read: (%s)\n", hudCommandNames[ev]);
+    if (PRINT_QUEUE_READ)
+      Serial.printf("<--hudStateQueue->read: (%s)\n", HUDCommand::modeNames[ev]);
   });
 
   ledDisplay = new StripLedClass();
@@ -27,7 +29,7 @@ void hudStateTask_1(void *pvParameters)
   ledDisplay->setLeds(CRGB::Blue);
 
   hudFsm.setEventTriggeredCb([](int ev) {
-    Serial.printf("-->hudFsm.event: %s\n", hudCommandNames[ev]);
+    Serial.printf("-->hudFsm.event: %s\n", HUDCommand::modeNames[ev]);
   });
   addHudStateTransitions();
 
@@ -40,15 +42,8 @@ void hudStateTask_1(void *pvParameters)
       sinceReadQueue = 0;
       if (hudStateQueue->messageAvailable())
       {
-        HUDCommand ev = (HUDCommand)hudStateQueue->read();
-        switch (ev)
-        {
-        case HUD_CMD_CYCLE_BRIGHTNESS:
-          ledDisplay->cycleBrightness();
-          break;
-        default:
-          hudFsm.trigger(ev);
-        };
+        HUDCommand::Mode ev = hudStateQueue->read<HUDCommand::Mode>();
+        hudFsm.trigger(ev);
       }
     }
 

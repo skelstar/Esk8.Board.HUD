@@ -94,11 +94,20 @@ private:
 
 //--------------------------------------------
 
-class HUDData
+class ControllerCommand
 {
 public:
   uint32_t id;
-  HUDCommand event;
+  HUDCommand::Mode mode;
+  HUDCommand::Colour colour;
+
+  ControllerCommand() {}
+
+  ControllerCommand(HUDCommand::Mode mode, HUDCommand::Colour colour)
+  {
+    mode = mode;
+    colour = colour;
+  }
 };
 
 #endif

@@ -6,8 +6,9 @@
 #include "Debug.hpp"
 
 #include <Arduino.h>
-#include <types.h>
 #include <shared-utils.h>
+#include <types.h>
+#include <QueueManager.h>
 #include <constants.h>
 #include <VescData.h>
 #include <elapsedMillis.h>
@@ -24,10 +25,6 @@ ControllerClass controller;
 
 //------------------------------------------------------------------
 
-#include <EventQueueManager.h>
-
-bool packetReady;
-
 #include <leds.h>
 #include <hudState.h>
 #include <tasks/hudStateTask.h>
@@ -38,12 +35,12 @@ Button2 button(BUTTON_PIN);
 
 void buttonPressedHandler(Button2 &btn)
 {
-  hudStateQueue->send(HUD_CMD_CYCLE_BRIGHTNESS);
+  hudStateQueue->send(HUDSpecialEvents::CYCLE_BRIGHTNESS);
 }
 
 void buttonDoubleClickHandler(Button2 &btn)
 {
-  sendActionToController(HUD_ACTION_DOUBLE_CLICK);
+  sendActionToController(HUDAction::DBLE_CLICK);
 }
 
 void buttonTripleClickHandler(Button2 &btn)
@@ -56,14 +53,19 @@ void buttonTripleClickHandler(Button2 &btn)
   }
   else
   {
-    sendActionToController(HUD_ACTION_TRIPLE_CLICK);
+    sendActionToController(HUDAction::TRPLE_CLICK);
   }
 }
 
 //-----------------------------------------------
+
 void asserts()
 {
-  assertEnum("LedsStateEvent", LedsStateEvent::EV_LED_Length, ARRAY_SIZE(ledStateEventNames));
+  HUDAction::assertThis();
+  HUDCommand::assertThis();
+  Packet::assertThis();
+  Button::assertThis();
+  assertHUDSpecialEvents();
 }
 
 //-----------------------------------------------
@@ -87,7 +89,7 @@ void setup()
   nrf24.begin(&radio, &network, COMMS_HUD, packetAvailable_cb);
   DEBUG("-----------------------------------------\n\n");
 
-  sendActionToController(HUD_ACTION_HEARTBEAT);
+  sendActionToController(HUDAction::HEARTBEAT);
 }
 //-----------------------------------------------
 

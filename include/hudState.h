@@ -12,13 +12,13 @@
 void addHudStateTransitions();
 void printState(char *text);
 
-const unsigned long FLASH_LENGTH_MS = 1000;
 elapsedMillis sinceStartedCycle,
-    sinceStartedPulseRed,
+    sinceStartedPulse,
     sinceUpdatedWipe,
     sinceStartedFlash,
     sinceReadQueue;
-bool pulseRedOn;
+bool pulseOn;
+CRGB origColour = CRGB::Black;
 
 //---------------------------------------------
 
@@ -30,41 +30,43 @@ State stateIdle(
     [] {},
     [] {});
 
-State stateFlashGreen(
+State stateFlash(
     [] {
-      printState("stateFlashGreen");
-      ledDisplay->setLeds(CRGB::DarkGreen);
+      printState("stateFlash");
+      ledDisplay->setLeds();
     },
     NULL, NULL);
 
-State statePulseRed(
+State statePulse(
     [] {
-      printState("statePulseRed");
-      ledDisplay->setLeds(CRGB::DarkRed);
-      sinceStartedPulseRed = 0;
+      printState("statePulse");
+      ledDisplay->setLeds();
+      pulseOn = true;
+      sinceStartedPulse = 0;
+      origColour = ledDisplay->getColour();
     },
     [] {
-      if (sinceStartedPulseRed > 1000)
+      if (sinceStartedPulse > LED_PULSE_SPEED_MS)
       {
-        sinceStartedPulseRed = 0;
-        pulseRedOn = !pulseRedOn;
-        ledDisplay->setLeds(pulseRedOn ? CRGB::DarkRed : CRGB::Black);
+        sinceStartedPulse = 0;
+        pulseOn = !pulseOn;
+        ledDisplay->setLeds(pulseOn ? origColour : CRGB::Black);
       }
     },
     [] {
       ledDisplay->setLeds(CRGB::Black);
     });
 
-State stateSpinGreen(
+State stateSpin(
     [] {
-      printState("stateSpinGreen");
+      printState("stateSpin");
       sinceUpdatedWipe = 0;
     },
     [] {
       if (sinceUpdatedWipe > LED_SPIN_SPEED_FAST_MS)
       {
         sinceUpdatedWipe = 0;
-        ledDisplay->animation(CRGB::DarkGreen);
+        ledDisplay->animation();
       }
     },
     [] {
@@ -80,39 +82,40 @@ State stateDisconnected(
       if (sinceUpdatedWipe > LED_SPIN_SPEED_MED_MS)
       {
         sinceUpdatedWipe = 0;
-        ledDisplay->animation(CRGB::DarkBlue);
+        ledDisplay->setColour(CRGB::DarkBlue);
+        ledDisplay->animation();
       }
     },
     [] {});
 
-void sendConnected()
+void sendHeartbeatToController()
 {
-  uint8_t d = (HudActionEvent::HUD_ACTION_HEARTBEAT);
-  nrf24.send(COMMS_CONTROLLER, HUD, &d, sizeof(uint8_t));
+  uint8_t d = (HUDAction::HEARTBEAT);
+  nrf24.send(COMMS_CONTROLLER, Packet::HUD, &d, sizeof(uint8_t));
 }
 
 Fsm hudFsm(&stateDisconnected);
 
 void addHudStateTransitions()
 {
-  hudFsm.add_transition(&stateDisconnected, &stateIdle, HUD_CMD_HEARTBEAT, sendConnected);
-  hudFsm.add_transition(&stateIdle, &stateDisconnected, HUD_CMD_DISCONNECTED, NULL);
+  hudFsm.add_transition(&stateDisconnected, &stateIdle, HUDCommand::MODE_NONE, sendHeartbeatToController);
+  hudFsm.add_transition(&stateIdle, &stateDisconnected, HUDSpecialEvents::DISCONNECTED, NULL);
 
-  hudFsm.add_transition(&stateIdle, &stateFlashGreen, HUD_CMD_FLASH_GREEN, NULL);
-  hudFsm.add_timed_transition(&stateFlashGreen, &stateIdle, LED_FLASH_LENGTH_MS, NULL);
-  hudFsm.add_transition(&stateFlashGreen, &stateDisconnected, HUD_CMD_DISCONNECTED, NULL);
+  hudFsm.add_transition(&stateIdle, &stateFlash, HUDCommand::FLASH, NULL);
+  hudFsm.add_timed_transition(&stateFlash, &stateIdle, LED_FLASH_LENGTH_MS, NULL);
+  hudFsm.add_transition(&stateFlash, &stateDisconnected, HUDSpecialEvents::DISCONNECTED, NULL);
 
-  hudFsm.add_transition(&stateIdle, &statePulseRed, HUD_CMD_PULSE_RED, NULL);
-  hudFsm.add_transition(&statePulseRed, &stateIdle, HUD_CMD_IDLE, NULL);
-  hudFsm.add_transition(&statePulseRed, &stateDisconnected, HUD_CMD_DISCONNECTED, NULL);
+  hudFsm.add_transition(&stateIdle, &statePulse, HUDCommand::PULSE, NULL);
+  hudFsm.add_transition(&statePulse, &stateIdle, HUDCommand::MODE_NONE, NULL);
+  hudFsm.add_transition(&statePulse, &stateDisconnected, HUDSpecialEvents::DISCONNECTED, NULL);
 
-  hudFsm.add_transition(&stateIdle, &stateSpinGreen, HUD_CMD_SPIN_GREEN, NULL);
-  hudFsm.add_transition(&stateSpinGreen, &stateIdle, HUD_CMD_IDLE, NULL);
+  hudFsm.add_transition(&stateIdle, &stateSpin, HUDCommand::SPIN, NULL);
+  hudFsm.add_transition(&stateSpin, &stateIdle, HUDCommand::MODE_NONE, NULL);
 }
 
 void printState(char *text)
 {
 #ifdef PRINT_LED_STATE
-  Serial.printf("ledState: %s\n", text);
+  Serial.printf("-----------------------ledState: %s\n", text);
 #endif
 }
