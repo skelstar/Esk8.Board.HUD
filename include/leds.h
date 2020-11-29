@@ -74,12 +74,7 @@ public:
   void setLeds(CRGB colour)
   {
     _colour = colour;
-    for (int num = 0; num < NUM_LEDS; num++)
-    {
-      leds[num] = _colour;
-    }
-    leds[0] = _colour;
-    FastLED.show();
+    setLeds();
   }
 
   HUDCommand::Speed getSpeed()

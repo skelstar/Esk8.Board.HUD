@@ -20,6 +20,8 @@ elapsedMillis sinceStartedCycle,
     sinceReadQueue;
 bool pulseOn;
 CRGB origColour = CRGB::Black;
+uint8_t flashPhase = 0;
+ulong interval = 0;
 
 //---------------------------------------------
 
@@ -38,9 +40,36 @@ State stateFlash(
       sinceStartedFlash = 0;
     },
     [] {
-      ulong interval = ledDisplay->getSpeedInterval();
+      interval = ledDisplay->getSpeedInterval();
       if (sinceStartedFlash > interval)
         sneakyTrigger((int)HUDCommand::MODE_NONE);
+    },
+    NULL);
+
+State stateDoubleFlash(
+    [] {
+      printState("stateDoubleFlash");
+      ledDisplay->setLeds();
+      sinceStartedFlash = 0;
+      flashPhase = 0;
+      origColour = ledDisplay->getColour();
+      interval = ledDisplay->getSpeedInterval();
+    },
+    [] {
+      if (sinceStartedFlash > interval)
+      {
+        sinceStartedFlash = 0;
+        flashPhase++;
+        if (flashPhase == 4)
+        {
+          sneakyTrigger((int)HUDCommand::MODE_NONE);
+        }
+        else
+        {
+          CRGB colour = (flashPhase % 2 == 0) ? origColour : CRGB::Black;
+          ledDisplay->setLeds(colour);
+        }
+      }
     },
     NULL);
 
@@ -111,8 +140,11 @@ void addHudStateTransitions()
 
   hudFsm.add_transition(&stateIdle, &stateFlash, HUDCommand::FLASH, NULL);
   hudFsm.add_transition(&stateFlash, &stateIdle, HUDCommand::MODE_NONE, NULL);
-  // hudFsm.add_timed_transition(&stateFlash, &stateIdle, ledDisplay->getSpeedInterval(), NULL);
   hudFsm.add_transition(&stateFlash, &stateDisconnected, HUDSpecialEvents::DISCONNECTED, NULL);
+
+  hudFsm.add_transition(&stateIdle, &stateDoubleFlash, HUDCommand::DOUBLE_FLASH, NULL);
+  hudFsm.add_transition(&stateDoubleFlash, &stateIdle, HUDCommand::MODE_NONE, NULL);
+  hudFsm.add_transition(&stateDoubleFlash, &stateDisconnected, HUDSpecialEvents::DISCONNECTED, NULL);
 
   hudFsm.add_transition(&stateIdle, &statePulse, HUDCommand::PULSE, NULL);
   hudFsm.add_transition(&statePulse, &stateIdle, HUDCommand::MODE_NONE, NULL);
