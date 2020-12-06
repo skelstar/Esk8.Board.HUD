@@ -21,7 +21,7 @@ void packetAvailable_cb(uint16_t from_id, uint8_t type)
   if (false == controller.connected)
   {
     controller.connected = true;
-    hudStateQueue->send(HUDCommand::MODE_NONE);
+    hudQueue.send(HUDCommand::MODE_NONE);
   }
 
   if (type == (int)Packet::HUD)
@@ -33,7 +33,7 @@ void packetAvailable_cb(uint16_t from_id, uint8_t type)
       ledDisplay->cycleBrightness();
       ledDisplay->setColour(HUDCommand::BLUE);
       ledDisplay->setSpeed(HUDCommand::SLOW);
-      hudStateQueue->send(HUDCommand::FLASH);
+      hudQueue.send(HUDCommand::FLASH);
     }
     else
     {
@@ -41,7 +41,7 @@ void packetAvailable_cb(uint16_t from_id, uint8_t type)
       ledDisplay->setSpeed(command.speed);
       ledDisplay->numFlashes = command.number;
 
-      hudStateQueue->send(command.mode);
+      hudQueue.send(command.mode);
     }
     if (PRINT_PACKET_RX)
       printRxPacket(command);
