@@ -12,7 +12,9 @@
 #include <constants.h>
 #include <VescData.h>
 #include <elapsedMillis.h>
+
 #include <NRF24L01Lib.h>
+#include <GenericClient.h>
 
 //------------------------------------------------------------------
 
@@ -20,6 +22,7 @@ NRF24L01Lib nrf24;
 
 RF24 radio(NRF_CE, NRF_CS);
 RF24Network network(radio);
+GenericClient controllerClient(COMMS_CONTROLLER);
 
 ControllerClass controller;
 
@@ -36,13 +39,12 @@ Button2 button(BUTTON_PIN);
 void buttonPressedHandler(Button2 &btn)
 {
   using HUDAction::Event;
-  sendActionToController(HUDAction::ONE_CLICK);
+  controllerClient.sendTo(Packet::HUD, HUDAction::ONE_CLICK);
 }
 
 void buttonDoubleClickHandler(Button2 &btn)
 {
-  using HUDAction::Event;
-  sendActionToController(HUDAction::TWO_CLICK);
+  controllerClient.sendTo(Packet::HUD, HUDAction::TWO_CLICK);
 }
 
 void buttonTripleClickHandler(Button2 &btn)
@@ -56,7 +58,7 @@ void buttonTripleClickHandler(Button2 &btn)
   }
   else
   {
-    sendActionToController(HUDAction::THREE_CLICK);
+    controllerClient.sendTo(Packet::HUD, HUDAction::THREE_CLICK);
   }
 }
 
@@ -90,9 +92,12 @@ void setup()
   createLedsTask(CORE_1, TASK_PRIORITY_1);
 
   nrf24.begin(&radio, &network, COMMS_HUD, packetAvailable_cb);
+  controllerClient.begin(&network, packetAvailable_cb);
+  controllerClient.setConnectedStateChangeCallback(controllerConnectedChange);
+
   DEBUG("-----------------------------------------\n\n");
 
-  sendActionToController(HUDAction::HEARTBEAT);
+  controllerClient.sendTo(Packet::HUD, HUDAction::HEARTBEAT);
 }
 //-----------------------------------------------
 
@@ -105,7 +110,7 @@ void loop()
   if (sinceCheckedNRF > 100)
   {
     sinceCheckedNRF = 0;
-    nrf24.update();
+    controllerClient.update();
   }
 
   delay(10);
