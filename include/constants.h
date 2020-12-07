@@ -13,15 +13,12 @@ namespace Button
     Length // has to be last, do not remove
   };
 
-  const char *names[] = {
+  std::string names[] = {
       "EV_BTN_NONE",
       "EV_BTN_DOUBLE_CLICK",
   };
 
-  void assertThis()
-  {
-    assertEnum("Button", Length, ARRAY_SIZE(names));
-  }
+  EnumManager<Button::Event> event(names);
 } // namespace Button
 
 #define LED_PULSE_SPEED_MS 600
@@ -64,41 +61,13 @@ namespace Button
 #define MODE_SPIN 7
 // #define COLOUR_BLACK 8
 
-HUDCommand::Mode getMode(uint16_t command)
-{
-  if (command | MODE_FLASH)
-    return HUDCommand::FLASH;
-  else if (command | MODE_PULSE)
-    return HUDCommand::PULSE;
-  else if (command | MODE_SPIN)
-    return HUDCommand::SPIN;
-  return HUDCommand::MODE_NONE;
-}
+//----------------------------
+#ifndef ESK8_ENUM_MANAGER
+#include <EnumManager.h>
+#endif
 
-HUDCommand::Colour getColour(uint16_t command)
-{
-  if (command | COLOUR_RED)
-  {
-    return HUDCommand::RED;
-  }
-  else if (command | COLOUR_BLUE)
-  {
-    return HUDCommand::BLUE;
-  }
-  else if (command | COLOUR_YELLOW)
-  {
-    return HUDCommand::YELLOW;
-  }
-  else if (command | COLOUR_GREEN)
-  {
-    return HUDCommand::GREEN;
-  }
-  else if (command | COLOUR_WHITE)
-  {
-    return HUDCommand::WHITE;
-  }
-  return HUDCommand::BLACK;
-}
+// EnumManager<HUDCommand::Mode> hudCommandModes(HUDCommand::modeNames);
+
 //----------------------------
 
 enum HUDSpecialEvents

@@ -1,14 +1,14 @@
 #ifndef ARDUINO_H
 #include <Arduino.h>
 #endif
-#ifndef ESK8_QUEUE_MANAGER
-#include <QueueManager.h>
-#endif
 
+//-----------------------------------------------------------------------
 
 xQueueHandle xHudEventQueue;
 
 Queue::Manager hudQueue(xHudEventQueue, /*ticks*/ 5);
+
+//-----------------------------------------------------------------------
 
 void hudStateTask_1(void *pvParameters)
 {
@@ -17,19 +17,23 @@ void hudStateTask_1(void *pvParameters)
   FastLED.setBrightness(brightnesses[brightnessIndex]);
   FastLED.addLeds<NEOPIXEL, LED_PIN>(leds, NUM_LEDS);
 
+  // Queue
   xHudEventQueue = xQueueCreate(/*len*/ 5, sizeof(uint8_t));
   hudQueue.setSentEventCallback([](uint8_t ev) {
     if (PRINT_QUEUE_SEND)
-      Serial.printf("-->hudStateQueue->send: (%s)\n", HUDCommand::modeNames[ev]);
+      Serial.printf("-->hudStateQueue->send: (%s)\n", HUDCommand::modes.getNameSafe(ev));
+  });
+  hudQueue.setReadEventCallback([](uint8_t ev) {
+    if (PRINT_QUEUE_READ)
+      Serial.printf("-->hudStateQueue->read: (%s)\n", HUDCommand::modes.getNameSafe(ev));
   });
 
   ledDisplay = new StripLedClass();
-
   ledDisplay->setLeds(CRGB::Blue);
 
-
+  // fsm
   hudFsm.setEventTriggeredCb([](int ev) {
-    Serial.printf("-->hudFsm.event: %s\n", HUDCommand::modeNames[ev]);
+    Serial.printf("-->hudFsm.event: %s\n", HUDCommand::modes.getNameSafe(ev));
   });
   addHudStateTransitions();
 
@@ -52,6 +56,8 @@ void hudStateTask_1(void *pvParameters)
   vTaskDelete(NULL);
 }
 
+//-----------------------------------------------------------------------
+
 void createLedsTask(uint8_t core, uint8_t priority)
 {
   xTaskCreatePinnedToCore(
@@ -61,3 +67,5 @@ void createLedsTask(uint8_t core, uint8_t priority)
       NULL,
       priority, NULL, core);
 }
+
+//-----------------------------------------------------------------------

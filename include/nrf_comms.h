@@ -1,6 +1,9 @@
 #ifndef ARDUINO_H
 #include <Arduino.h>
 #endif
+#ifndef ESK8_ENUM_MANAGER
+#include <EnumManager.h>
+#endif
 
 template <typename T>
 T readFromNrf();
@@ -55,8 +58,8 @@ void packetAvailable_cb(uint16_t from_id, uint8_t type)
 void printRxPacket(ControllerCommand command)
 {
   Serial.printf("-->rx: %s|%s|%s|%d\n",
-                HUDCommand::modeNames[(int)command.mode],
-                HUDCommand::colourName[(int)command.colour],
-                HUDCommand::speed[(int)command.speed],
+                HUDCommand::modes.getNameSafe(command.mode),
+                HUDCommand::colours.getNameSafe(command.colour),
+                HUDCommand::speed.getNameSafe(command.speed),
                 command.number);
 }

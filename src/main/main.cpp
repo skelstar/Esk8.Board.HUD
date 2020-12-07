@@ -66,10 +66,10 @@ void buttonTripleClickHandler(Button2 &btn)
 
 void asserts()
 {
-  HUDAction::assertThis();
-  HUDCommand::assertThis();
-  Packet::assertThis();
-  Button::assertThis();
+  HUDAction::event.assertThis("HUDAction::Event", HUDAction::Length);
+  HUDCommand::modes.assertThis("HUDCOmmand::Mode", HUDCommand::ModeLength);
+  Packet::typee.assertThis("Packet::Type", Packet::Length);
+  Button::event.assertThis("Button::Event", Button::Length);
   assertHUDSpecialEvents();
 }
 
@@ -94,6 +94,8 @@ void setup()
   nrf24.begin(&radio, &network, COMMS_HUD, packetAvailable_cb);
   controllerClient.begin(&network, packetAvailable_cb);
   controllerClient.setConnectedStateChangeCallback(controllerConnectedChange);
+
+  HUDCommand::modes.assertThis("HUDCommand::Mode", HUDCommand::ModeLength);
 
   DEBUG("-----------------------------------------\n\n");
 
