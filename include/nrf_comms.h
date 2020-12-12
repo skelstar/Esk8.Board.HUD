@@ -1,9 +1,6 @@
 #ifndef ARDUINO_H
 #include <Arduino.h>
 #endif
-#ifndef ESK8_ENUM_MANAGER
-#include <EnumManager.h>
-#endif
 
 template <typename T>
 T readFromNrf();
@@ -51,15 +48,15 @@ void packetAvailable_cb(uint16_t from_id, uint8_t type)
   }
   else
   {
-    Serial.printf("Packet not supported: %s\n", Packet::names[(int)type]);
+    Serial.printf("Packet not supported: %s\n", Packet::getType(type));
   }
 }
 //------------------------------------------------------------------
 void printRxPacket(ControllerCommand command)
 {
   Serial.printf("-->rx: %s|%s|%s|%d\n",
-                HUDCommand::modes.getNameSafe(command.mode),
-                HUDCommand::colours.getNameSafe(command.colour),
-                HUDCommand::speed.getNameSafe(command.speed),
+                HUDCommand::getMode(command.mode),
+                HUDCommand::getColour(command.colour),
+                HUDCommand::getSpeed(command.speed),
                 command.number);
 }

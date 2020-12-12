@@ -4,6 +4,8 @@
 
 #define BUTTON_PIN 16
 
+#define OUT_OF_RANGE "OUT OF RANGE"
+
 namespace Button
 {
   enum Event
@@ -13,12 +15,17 @@ namespace Button
     Length // has to be last, do not remove
   };
 
-  std::string names[] = {
-      "EV_BTN_NONE",
-      "EV_BTN_DOUBLE_CLICK",
-  };
-
-  EnumManager<Button::Event> event(names);
+  const char *getEvent(Event ev)
+  {
+    switch (ev)
+    {
+    case EV_BTN_NONE:
+      return "EV_BTN_NONE";
+    case EV_BTN_DOUBLE_CLICK:
+      return "EV_BTN_DOUBLE_CLICK";
+    }
+    return OUT_OF_RANGE;
+  }
 } // namespace Button
 
 #define LED_PULSE_SPEED_MS 600
@@ -62,31 +69,28 @@ namespace Button
 // #define COLOUR_BLACK 8
 
 //----------------------------
-#ifndef ESK8_ENUM_MANAGER
-#include <EnumManager.h>
-#endif
 
-// EnumManager<HUDCommand::Mode> hudCommandModes(HUDCommand::modeNames);
-
-//----------------------------
-
-enum HUDSpecialEvents
+namespace HUDSpecialEvents
 {
-  DISCONNECTED = HUDCommand::ModeLength, // makes sure it doesn't conflict with HUDCommand
-  CYCLE_BRIGHTNESS,
-  SpecialEventLength
-};
+  enum HUDSpecialEvents
+  {
+    DISCONNECTED = HUDCommand::ModeLength, // makes sure it doesn't conflict with HUDCommand
+    CYCLE_BRIGHTNESS,
+    Length
+  };
 
-const char *specialEvent[] = {
-    "DISCONNECTED",
-    "CYCLE_BRIGHTNESS",
-};
-
-void assertHUDSpecialEvents()
-{
-  assertEnum("HUDSpecialEvents", HUDSpecialEvents::SpecialEventLength, ARRAY_SIZE(specialEvent));
-}
-//----------------------------
+  const char *getEvent(HUDSpecialEvents ev)
+  {
+    switch (ev)
+    {
+    case DISCONNECTED:
+      return "DISCONNECTED";
+    case CYCLE_BRIGHTNESS:
+      return "CYCLE_BRIGHTNESS";
+    }
+    return OUT_OF_RANGE;
+  }
+} // namespace HUDSpecialEvents
 
 #ifndef PRINT_QUEUE_SEND
 #define PRINT_QUEUE_SEND 0

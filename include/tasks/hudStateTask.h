@@ -21,21 +21,21 @@ void hudStateTask_1(void *pvParameters)
   xHudEventQueue = xQueueCreate(/*len*/ 5, sizeof(uint8_t));
   hudQueue.setSentEventCallback([](uint8_t ev) {
     if (PRINT_QUEUE_SEND)
-      Serial.printf("-->hudStateQueue->send: (%s)\n", HUDCommand::modes.getNameSafe(ev));
+      Serial.printf("-->hudStateQueue->send: (%s)\n", HUDCommand::getMode(ev));
   });
   hudQueue.setReadEventCallback([](uint8_t ev) {
     if (PRINT_QUEUE_READ)
-      Serial.printf("-->hudStateQueue->read: (%s)\n", HUDCommand::modes.getNameSafe(ev));
+      Serial.printf("-->hudStateQueue->read: (%s)\n", HUDCommand::getMode(ev));
   });
 
   ledDisplay = new StripLedClass();
   ledDisplay->setLeds(CRGB::Blue);
 
   // fsm
-  hudFsm.setEventTriggeredCb([](int ev) {
-    Serial.printf("-->hudFsm.event: %s\n", HUDCommand::modes.getNameSafe(ev));
+  HUD::fsm.setEventTriggeredCb([](int ev) {
+    Serial.printf("-->fsm.event: %s\n", HUDCommand::getMode(ev));
   });
-  addHudStateTransitions();
+  HUD::addTransitions();
 
   while (true)
   {
@@ -47,11 +47,11 @@ void hudStateTask_1(void *pvParameters)
       if (hudQueue.messageAvailable())
       {
         HUDCommand::Mode ev = hudQueue.read<HUDCommand::Mode>();
-        hudFsm.trigger(ev);
+        HUD::fsm.trigger(ev);
       }
     }
 
-    hudFsm.run_machine();
+    HUD::fsm.run_machine();
   }
   vTaskDelete(NULL);
 }

@@ -9,6 +9,7 @@
 #include <shared-utils.h>
 #include <types.h>
 #include <QueueManager.h>
+#include <FsmManager.h>
 #include <constants.h>
 #include <VescData.h>
 #include <elapsedMillis.h>
@@ -61,18 +62,6 @@ void buttonTripleClickHandler(Button2 &btn)
     controllerClient.sendTo(Packet::HUD, HUDAction::THREE_CLICK);
   }
 }
-
-//-----------------------------------------------
-
-void asserts()
-{
-  HUDAction::event.assertThis("HUDAction::Event", HUDAction::Length);
-  HUDCommand::modes.assertThis("HUDCOmmand::Mode", HUDCommand::ModeLength);
-  Packet::typee.assertThis("Packet::Type", Packet::Length);
-  Button::event.assertThis("Button::Event", Button::Length);
-  assertHUDSpecialEvents();
-}
-
 //-----------------------------------------------
 
 void setup()
@@ -94,8 +83,6 @@ void setup()
   nrf24.begin(&radio, &network, COMMS_HUD, packetAvailable_cb);
   controllerClient.begin(&network, packetAvailable_cb);
   controllerClient.setConnectedStateChangeCallback(controllerConnectedChange);
-
-  HUDCommand::modes.assertThis("HUDCommand::Mode", HUDCommand::ModeLength);
 
   DEBUG("-----------------------------------------\n\n");
 
