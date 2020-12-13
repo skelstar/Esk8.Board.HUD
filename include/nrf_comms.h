@@ -10,7 +10,10 @@ void printRxPacket(ControllerCommand command);
 
 void controllerConnectedChange()
 {
-  Serial.printf("Controller: %s\n", controllerClient.connected() ? "CONNECTED" : "DISCONNECTED");
+  Serial.printf(CLIENT_CONNECT_CHANGE_FORMAT_STRING,
+                controllerClient.connected()
+                    ? "CONNECTED"
+                    : "DISCONNECTED");
 }
 
 void packetAvailable_cb(uint16_t from_id, uint8_t type)
@@ -21,19 +24,21 @@ void packetAvailable_cb(uint16_t from_id, uint8_t type)
   if (false == controller.connected)
   {
     controller.connected = true;
-    hudQueue.send(HUDCommand::MODE_NONE);
+    hudQueue->send(HUDCommand::MODE_NONE);
   }
 
   if (type == (int)Packet::HUD)
   {
-    ControllerCommand command = controllerClient.read<ControllerCommand>();
+    ControllerCommand command = controllerClient.read();
+
+    printRxPacket(command);
 
     if (command.mode == HUDCommand::CYCLE_BRIGHTNESS)
     {
       ledDisplay->cycleBrightness();
       ledDisplay->setColour(HUDCommand::BLUE);
       ledDisplay->setSpeed(HUDCommand::SLOW);
-      hudQueue.send(HUDCommand::FLASH);
+      hudQueue->send(HUDCommand::FLASH);
     }
     else
     {
@@ -41,10 +46,8 @@ void packetAvailable_cb(uint16_t from_id, uint8_t type)
       ledDisplay->setSpeed(command.speed);
       ledDisplay->numFlashes = command.number;
 
-      hudQueue.send(command.mode);
+      hudQueue->send(command.mode);
     }
-    if (PRINT_PACKET_RX)
-      printRxPacket(command);
   }
   else
   {
@@ -54,9 +57,10 @@ void packetAvailable_cb(uint16_t from_id, uint8_t type)
 //------------------------------------------------------------------
 void printRxPacket(ControllerCommand command)
 {
-  Serial.printf("-->rx: %s|%s|%s|%d\n",
-                HUDCommand::getMode(command.mode),
-                HUDCommand::getColour(command.colour),
-                HUDCommand::getSpeed(command.speed),
-                command.number);
+  if (PRINT_PACKET_RX)
+    Serial.printf(RX_PACKET_FORMAT_STRING,
+                  HUDCommand::getMode(command.mode),
+                  HUDCommand::getColour(command.colour),
+                  HUDCommand::getSpeed(command.speed),
+                  command.number);
 }

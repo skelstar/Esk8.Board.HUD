@@ -44,10 +44,10 @@ namespace HUD
           "DISCONNECTED",
   };
 
-  std::string getStateName(uint8_t id)
+  const char *getStateName(uint8_t id)
   {
     return id < Length && ARRAY_SIZE(stateNames) == Length
-               ? stateNames[id]
+               ? stateNames[id].c_str()
                : "OUT OF RANGE";
   }
 

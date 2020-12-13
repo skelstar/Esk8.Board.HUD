@@ -98,7 +98,7 @@ public:
     case HUDCommand::FAST:
       return 150;
     default:
-      Serial.printf("WARNING: NO_SPEED was selected\n");
+      // Serial.printf("WARNING: NO_SPEED was selected\n");
       return 0;
     }
   }
