@@ -6,66 +6,74 @@
 
 xQueueHandle xHudEventQueue;
 
-Queue::Manager hudQueue(xHudEventQueue, /*ticks*/ 5);
+Queue::Manager *hudQueue;
 
 //-----------------------------------------------------------------------
 
-void hudStateTask_1(void *pvParameters)
+namespace HUD
 {
-  Serial.printf("hudStateTask_1 running on core %d\n", xPortGetCoreID());
-
-  FastLED.setBrightness(brightnesses[brightnessIndex]);
-  FastLED.addLeds<NEOPIXEL, LED_PIN>(leds, NUM_LEDS);
-
-  // Queue
-  xHudEventQueue = xQueueCreate(/*len*/ 5, sizeof(uint8_t));
-  hudQueue.setSentEventCallback([](uint8_t ev) {
-    if (PRINT_QUEUE_SEND)
-      Serial.printf("-->hudStateQueue->send: (%s)\n", HUDCommand::getMode(ev));
-  });
-  hudQueue.setReadEventCallback([](uint8_t ev) {
-    if (PRINT_QUEUE_READ)
-      Serial.printf("-->hudStateQueue->read: (%s)\n", HUDCommand::getMode(ev));
-  });
-
-  ledDisplay = new StripLedClass();
-  ledDisplay->setLeds(CRGB::Blue);
-
-  // fsm
-  HUD::fsm.setEventTriggeredCb([](int ev) {
-    Serial.printf("-->fsm.event: %s\n", HUDCommand::getMode(ev));
-  });
-  HUD::addTransitions();
-
-  while (true)
+  void task(void *pvParameters)
   {
-    vTaskDelay(10);
+    Serial.printf("hudStateTask_1 running on core %d\n", xPortGetCoreID());
 
-    if (sinceReadQueue > 100)
+    // Queue
+    xHudEventQueue = xQueueCreate(/*len*/ 5, sizeof(uint8_t));
+    hudQueue = new Queue::Manager(xHudEventQueue, /*ticks*/ 5, HUDCommand::MODE_NO_EVENT);
+    hudQueue->setSentEventCallback([](uint8_t ev) {
+      if (PRINT_QUEUE_SEND)
+        Serial.printf(QUEUE_SEND_FORMAT_STRING, HUDCommand::getMode(ev));
+    });
+    hudQueue->setReadEventCallback([](uint8_t ev) {
+      if (PRINT_QUEUE_READ)
+        Serial.printf(QUEUE_READ_FORMAT_STRING, HUDCommand::getMode(ev));
+    });
+
+    // leds
+    FastLED.setBrightness(brightnesses[brightnessIndex]);
+    FastLED.addLeds<NEOPIXEL, LED_PIN>(leds, NUM_LEDS);
+    ledDisplay = new StripLedClass();
+    ledDisplay->setLeds(CRGB::Blue);
+
+    // fsm
+    stateFsm.begin(&fsm, STATE_STRING_FORMAT_LONG, STATE_STRING_FORMAT_SHORT);
+    stateFsm.setGetStateNameCallback([](uint8_t id) {
+      return HUD::getStateName(id);
+    });
+    fsm.setTriggeredCb([](int ev) {
+      Serial.printf(FSM_TRIGGER_FORMAT_STRING, HUDCommand::getMode(ev));
+    });
+    addTransitions();
+
+    while (true)
     {
-      sinceReadQueue = 0;
-      if (hudQueue.messageAvailable())
+      vTaskDelay(10);
+
+      if (sinceReadQueue > 100)
       {
-        HUDCommand::Mode ev = hudQueue.read<HUDCommand::Mode>();
-        HUD::fsm.trigger(ev);
+        sinceReadQueue = 0;
+        HUDCommand::Mode ev = hudQueue->read<HUDCommand::Mode>();
+        if (ev != HUDCommand::MODE_NO_EVENT)
+        {
+          stateFsm.trigger(ev);
+        }
       }
+      stateFsm.runMachine();
     }
-
-    HUD::fsm.run_machine();
+    vTaskDelete(NULL);
   }
-  vTaskDelete(NULL);
-}
 
-//-----------------------------------------------------------------------
+  //-----------------------------------------------------------------------
 
-void createLedsTask(uint8_t core, uint8_t priority)
-{
-  xTaskCreatePinnedToCore(
-      hudStateTask_1,
-      "hudStateTask_1",
-      10000,
-      NULL,
-      priority, NULL, core);
-}
-
-//-----------------------------------------------------------------------
+  void createTask(uint8_t core, uint8_t priority)
+  {
+    xTaskCreatePinnedToCore(
+        task,
+        "HUD::task",
+        10000,
+        NULL,
+        priority,
+        NULL,
+        core);
+  }
+} // namespace HUD
+  //-----------------------------------------------------------------------

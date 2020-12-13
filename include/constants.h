@@ -104,3 +104,11 @@ namespace HUDSpecialEvents
 #ifndef PRINT_SEND_ACTION
 #define PRINT_SEND_ACTION 0
 #endif
+
+#define STATE_STRING_FORMAT_SHORT "[STATE: %s]\n"
+#define STATE_STRING_FORMAT_LONG "[STATE: %s | %s]\n"
+#define CLIENT_CONNECT_CHANGE_FORMAT_STRING "[CLIENT] Controller: %s\n"
+#define FSM_TRIGGER_FORMAT_STRING "!!triggered: %s\n"
+#define QUEUE_SEND_FORMAT_STRING "--> hudQueue->send: (%s)\n"
+#define QUEUE_READ_FORMAT_STRING "<-- hudQueue->read: (%s)\n"
+#define RX_PACKET_FORMAT_STRING "-->RX: %s|%s|%s|%d\n"

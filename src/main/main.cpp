@@ -23,7 +23,7 @@ NRF24L01Lib nrf24;
 
 RF24 radio(NRF_CE, NRF_CS);
 RF24Network network(radio);
-GenericClient controllerClient(COMMS_CONTROLLER);
+GenericClient<HUDAction::Event, ControllerCommand> controllerClient(COMMS_CONTROLLER);
 
 ControllerClass controller;
 
@@ -78,7 +78,7 @@ void setup()
   button.setDoubleClickHandler(buttonDoubleClickHandler);
   button.setTripleClickHandler(buttonTripleClickHandler);
 
-  createLedsTask(CORE_1, TASK_PRIORITY_1);
+  HUD::createTask(CORE_1, TASK_PRIORITY_1);
 
   nrf24.begin(&radio, &network, COMMS_HUD, packetAvailable_cb);
   controllerClient.begin(&network, packetAvailable_cb);
