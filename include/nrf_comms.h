@@ -4,18 +4,9 @@
 
 template <typename T>
 T readFromNrf();
-void printRxPacket(ControllerCommand command);
+void printRxPacket(uint16_t command);
 
 //------------------------------------------------------------------
-
-void controllerConnectedChange()
-{
-  Serial.printf(CLIENT_CONNECT_CHANGE_FORMAT_STRING,
-                controllerClient.connected()
-                    ? "CONNECTED"
-                    : "DISCONNECTED");
-}
-
 void packetAvailable_cb(uint16_t from_id, uint8_t type)
 {
   controller.sinceLastPacket = 0;
@@ -24,29 +15,31 @@ void packetAvailable_cb(uint16_t from_id, uint8_t type)
   if (false == controller.connected)
   {
     controller.connected = true;
-    hudQueue->send(HUDCommand::MODE_NONE);
+    hudQueue->send(HUDCommand1::CommandBit::HEARTBEAT);
   }
 
   if (type == (int)Packet::HUD)
   {
-    ControllerCommand command = controllerClient.read();
+    using namespace HUDCommand1;
+    uint16_t command = controllerClient.read();
 
-    printRxPacket(command);
-
-    if (command.mode == HUDCommand::CYCLE_BRIGHTNESS)
+    if (is<CYCLE_BRIGHTNESS>(command))
     {
       ledDisplay->cycleBrightness();
-      ledDisplay->setColour(HUDCommand::BLUE);
-      ledDisplay->setSpeed(HUDCommand::SLOW);
-      hudQueue->send(HUDCommand::FLASH);
+      hudQueue->send(1 << TWO_FLASHES | 1 << CommandBit::SLOW | 1 << BLUE);
     }
     else
     {
-      ledDisplay->setColour(command.colour);
-      ledDisplay->setSpeed(command.speed);
-      ledDisplay->numFlashes = command.number;
+      ledDisplay->setColour(command);
+      ledDisplay->setSpeed(command);
+      int numFlashes = 1;
+      if (is<TWO_FLASHES>(command))
+        numFlashes = 2;
+      else if (is<THREE_FLASHES>(command))
+        numFlashes = 3;
+      ledDisplay->numFlashes = numFlashes;
 
-      hudQueue->send(command.mode);
+      hudQueue->send(command);
     }
   }
   else
@@ -55,12 +48,19 @@ void packetAvailable_cb(uint16_t from_id, uint8_t type)
   }
 }
 //------------------------------------------------------------------
-void printRxPacket(ControllerCommand command)
+void controllerConnectedChange()
+{
+  Serial.printf(CLIENT_CONNECT_CHANGE_FORMAT_STRING,
+                controllerClient.connected()
+                    ? "<----->"
+                    : "-- / --");
+}
+
+void printRxPacket(uint16_t command)
 {
   if (PRINT_PACKET_RX)
     Serial.printf(RX_PACKET_FORMAT_STRING,
-                  HUDCommand::getMode(command.mode),
-                  HUDCommand::getColour(command.colour),
-                  HUDCommand::getSpeed(command.speed),
-                  command.number);
+                  HUDCommand1::getMode(command),
+                  HUDCommand1::getColour(command),
+                  HUDCommand1::getSpeed(command));
 }

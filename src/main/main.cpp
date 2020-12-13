@@ -23,7 +23,7 @@ NRF24L01Lib nrf24;
 
 RF24 radio(NRF_CE, NRF_CS);
 RF24Network network(radio);
-GenericClient<HUDAction::Event, ControllerCommand> controllerClient(COMMS_CONTROLLER);
+GenericClient<HUDAction::Event, uint16_t> controllerClient(COMMS_CONTROLLER);
 
 ControllerClass controller;
 
@@ -83,6 +83,12 @@ void setup()
   nrf24.begin(&radio, &network, COMMS_HUD, packetAvailable_cb);
   controllerClient.begin(&network, packetAvailable_cb);
   controllerClient.setConnectedStateChangeCallback(controllerConnectedChange);
+  controllerClient.setReadPacketCallback([](uint16_t command) {
+    printRxPacket(command);
+  });
+  controllerClient.setSentPacketCallback([](HUDAction::Event action) {
+    Serial.printf(TX_PACKET_FORMAT, HUDAction::getName(action));
+  });
 
   DEBUG("-----------------------------------------\n\n");
 

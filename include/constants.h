@@ -4,8 +4,6 @@
 
 #define BUTTON_PIN 16
 
-#define OUT_OF_RANGE "OUT OF RANGE"
-
 namespace Button
 {
   enum Event
@@ -66,31 +64,31 @@ namespace Button
 #define MODE_FLASH 5
 #define MODE_PULSE 6
 #define MODE_SPIN 7
-// #define COLOUR_BLACK 8
+#define COLOUR_BLACK 8
 
 //----------------------------
 
-namespace HUDSpecialEvents
-{
-  enum HUDSpecialEvents
-  {
-    DISCONNECTED = HUDCommand::ModeLength, // makes sure it doesn't conflict with HUDCommand
-    CYCLE_BRIGHTNESS,
-    Length
-  };
+// namespace HUDSpecialEvents
+// {
+//   enum HUDSpecialEvents
+//   {
+//     DISCONNECTED = HUDCommand::ModeLength, // makes sure it doesn't conflict with HUDCommand
+//     CYCLE_BRIGHTNESS,
+//     Length
+//   };
 
-  const char *getEvent(HUDSpecialEvents ev)
-  {
-    switch (ev)
-    {
-    case DISCONNECTED:
-      return "DISCONNECTED";
-    case CYCLE_BRIGHTNESS:
-      return "CYCLE_BRIGHTNESS";
-    }
-    return OUT_OF_RANGE;
-  }
-} // namespace HUDSpecialEvents
+//   const char *getEvent(HUDSpecialEvents ev)
+//   {
+//     switch (ev)
+//     {
+//     case DISCONNECTED:
+//       return "DISCONNECTED";
+//     case CYCLE_BRIGHTNESS:
+//       return "CYCLE_BRIGHTNESS";
+//     }
+//     return OUT_OF_RANGE;
+//   }
+// } // namespace HUDSpecialEvents
 
 #ifndef PRINT_QUEUE_SEND
 #define PRINT_QUEUE_SEND 0
@@ -105,10 +103,18 @@ namespace HUDSpecialEvents
 #define PRINT_SEND_ACTION 0
 #endif
 
-#define STATE_STRING_FORMAT_SHORT "[STATE: %s]\n"
-#define STATE_STRING_FORMAT_LONG "[STATE: %s | %s]\n"
-#define CLIENT_CONNECT_CHANGE_FORMAT_STRING "[CLIENT] Controller: %s\n"
+#define STATE_STRING_FORMAT_WITHOUT_EVENT "[STATE: %s]\n"
+#define STATE_STRING_FORMAT_WITH_EVENT "[STATE: %s | %s]\n"
+#define CLIENT_CONNECT_CHANGE_FORMAT_STRING "[CLIENT] Controller %s HUD\n"
 #define FSM_TRIGGER_FORMAT_STRING "!!triggered: %s\n"
 #define QUEUE_SEND_FORMAT_STRING "--> hudQueue->send: (%s)\n"
 #define QUEUE_READ_FORMAT_STRING "<-- hudQueue->read: (%s)\n"
-#define RX_PACKET_FORMAT_STRING "-->RX: %s|%s|%s|%d\n"
+#define RX_PACKET_FORMAT_STRING "-->RX: %s|%s|%s\n"
+#define TX_PACKET_FORMAT "-->TX: %s"
+
+enum LedSpeed
+{
+  NONE = 0,
+  SLOW,
+  FAST,
+};

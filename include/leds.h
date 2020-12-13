@@ -77,25 +77,28 @@ public:
     setLeds();
   }
 
-  HUDCommand::Speed getSpeed()
+  LedSpeed getSpeed()
   {
     return _speed;
   }
 
-  void setSpeed(HUDCommand::Speed speed)
+  void setSpeed(uint16_t command)
   {
-    _speed = speed;
+    using namespace HUDCommand1;
+    _speed = LedSpeed::NONE;
+    if (is<CommandBit::SLOW>(command))
+      _speed = LedSpeed::SLOW;
+    else if (is<CommandBit::FAST>(command))
+      _speed = LedSpeed::FAST;
   }
 
   unsigned long getSpeedInterval()
   {
     switch (_speed)
     {
-    case HUDCommand::SLOW:
+    case LedSpeed::SLOW:
       return 1000;
-    case HUDCommand::MED:
-      return 600;
-    case HUDCommand::FAST:
+    case LedSpeed::FAST:
       return 150;
     default:
       // Serial.printf("WARNING: NO_SPEED was selected\n");
@@ -108,33 +111,17 @@ public:
     return _colour;
   }
 
-  void setColour(CRGB colour)
+  void setColour(uint16_t command)
   {
-    _colour = colour;
-  }
-
-  void setColour(HUDCommand::Colour colour)
-  {
-    switch (colour)
-    {
-    case HUDCommand::RED:
-      _colour = CRGB::Red;
-      break;
-    case HUDCommand::GREEN:
-      _colour = CRGB::Green;
-      break;
-    case HUDCommand::YELLOW:
-      _colour = CRGB::Yellow;
-      break;
-    case HUDCommand::BLUE:
-      _colour = CRGB::Blue;
-      break;
-    case HUDCommand::WHITE:
-      _colour = CRGB::White;
-      break;
-    default:
+    using namespace HUDCommand1;
+    if (is<GREEN>(command))
+      _colour = CRGB::DarkGreen;
+    else if (is<RED>(command))
+      _colour = CRGB::DarkRed;
+    else if (is<BLUE>(command))
+      _colour = CRGB::DarkBlue;
+    else
       _colour = CRGB::Black;
-    }
   }
 
   uint8_t numFlashes = 0;
@@ -142,7 +129,7 @@ public:
 protected:
   uint8_t _walkIdx = 0, _walkIdx2 = -1, _walkIdx3 = -2;
   CRGB _colour = CRGB::Black;
-  HUDCommand::Speed _speed;
+  LedSpeed _speed;
 };
 //--------------------------------------------
 

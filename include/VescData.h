@@ -94,24 +94,4 @@ private:
 
 //--------------------------------------------
 
-class ControllerCommand
-{
-public:
-  uint32_t id;
-  HUDCommand::Mode mode;
-  HUDCommand::Colour colour;
-  HUDCommand::Speed speed;
-  uint8_t number;
-
-  ControllerCommand(){};
-
-  ControllerCommand(HUDCommand::Mode m, HUDCommand::Colour c, HUDCommand::Speed spd, uint8_t num)
-  {
-    mode = m;
-    colour = c;
-    speed = spd;
-    number = num;
-  }
-};
-
 #endif
