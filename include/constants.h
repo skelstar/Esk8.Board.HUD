@@ -103,14 +103,14 @@ namespace Button
 #define PRINT_SEND_ACTION 0
 #endif
 
+#define OUT_EVENT_FORMAT_STRING "%s --> %s --> %s\n"
+#define IN_EVENT_FORMAT_STRING "%s <-- %s <-- %s\n"
+
 #define STATE_STRING_FORMAT_WITHOUT_EVENT "[STATE: %s]\n"
 #define STATE_STRING_FORMAT_WITH_EVENT "[STATE: %s | %s]\n"
-#define CLIENT_CONNECT_CHANGE_FORMAT_STRING "[CLIENT] Controller %s HUD\n"
+#define CLIENT_CONNECT_CHANGE_FORMAT_STRING "[CLIENT] Controller %s HUD [CLIENT]\n"
 #define FSM_TRIGGER_FORMAT_STRING "!!triggered: %s\n"
-#define QUEUE_SEND_FORMAT_STRING "--> hudQueue->send: (%s)\n"
-#define QUEUE_READ_FORMAT_STRING "<-- hudQueue->read: (%s)\n"
-#define RX_PACKET_FORMAT_STRING "-->RX: %s|%s|%s\n"
-#define TX_PACKET_FORMAT "-->TX: %s"
+#define RX_PACKET_FORMAT_STRING "[RX]<-- %s|%s|%s <--CONTROLLER\n"
 
 enum LedSpeed
 {

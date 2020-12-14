@@ -4,16 +4,26 @@
 
 //-----------------------------------------------------------------------
 
-xQueueHandle xHudEventQueue;
-
 Queue::Manager *hudQueue;
+
+void hudQueueInit()
+{
+  hudQueue = new Queue::Manager(/*len*/ 5, sizeof(uint16_t), /*ticks*/ 5, 0);
+  hudQueue->setSentEventCallback([](uint16_t ev) {
+    if (PRINT_QUEUE_SEND)
+      Serial.printf(OUT_EVENT_FORMAT_STRING, "[Q:Send]", HUDCommand1::getMode(ev), "hudQueue");
+  });
+  hudQueue->setReadEventCallback([](uint16_t ev) {
+    if (PRINT_QUEUE_READ)
+      Serial.printf(IN_EVENT_FORMAT_STRING, "[Q:Read]", HUDCommand1::getMode(ev), "hudQueue");
+  });
+}
 
 //-----------------------------------------------------------------------
 
 namespace HUD
 {
   const char *taskName = "HUD::task";
-  void setupQueue();
   void setupLeds();
   void setupFsm();
 
@@ -21,7 +31,7 @@ namespace HUD
   {
     Serial.printf("%s running on core %d\n", taskName, xPortGetCoreID());
 
-    setupQueue();
+    hudQueueInit();
 
     setupLeds();
 
@@ -65,20 +75,6 @@ namespace HUD
     FastLED.addLeds<NEOPIXEL, LED_PIN>(leds, NUM_LEDS);
     ledDisplay = new StripLedClass();
     ledDisplay->setLeds(CRGB::Blue);
-  }
-
-  void setupQueue()
-  {
-    xHudEventQueue = xQueueCreate(/*len*/ 5, sizeof(uint16_t));
-    hudQueue = new Queue::Manager(xHudEventQueue, /*ticks*/ 5, 0);
-    hudQueue->setSentEventCallback([](uint8_t ev) {
-      // if (PRINT_QUEUE_SEND)
-      //   Serial.printf(QUEUE_SEND_FORMAT_STRING, HUDCommand1::getName(ev));
-    });
-    hudQueue->setReadEventCallback([](uint8_t ev) {
-      // if (PRINT_QUEUE_READ)
-      //   Serial.printf(QUEUE_READ_FORMAT_STRING, HUDCommand1::getName(ev));
-    });
   }
 
   void setupFsm()

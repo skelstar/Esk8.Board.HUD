@@ -4,7 +4,6 @@
 
 template <typename T>
 T readFromNrf();
-void printRxPacket(uint16_t command);
 
 //------------------------------------------------------------------
 void packetAvailable_cb(uint16_t from_id, uint8_t type)
@@ -39,6 +38,8 @@ void packetAvailable_cb(uint16_t from_id, uint8_t type)
         numFlashes = 3;
       ledDisplay->numFlashes = numFlashes;
 
+      Serial.printf("packetAvailable_cb: %s, mapped: %d\n", HUDCommand1::getMode(command), HUD::Triggers::mapToTriggers(command));
+
       hudQueue->send(command);
     }
   }
@@ -53,7 +54,7 @@ void controllerConnectedChange()
   Serial.printf(CLIENT_CONNECT_CHANGE_FORMAT_STRING,
                 controllerClient.connected()
                     ? "<----->"
-                    : "-- / --");
+                    : "-- | --");
 }
 
 void printRxPacket(uint16_t command)

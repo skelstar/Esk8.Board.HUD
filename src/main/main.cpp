@@ -84,13 +84,21 @@ void setup()
   controllerClient.begin(&network, packetAvailable_cb);
   controllerClient.setConnectedStateChangeCallback(controllerConnectedChange);
   controllerClient.setReadPacketCallback([](uint16_t command) {
-    printRxPacket(command);
+    Serial.printf(IN_EVENT_FORMAT_STRING, "RX", HUDCommand1::getMode(command), "CtrlrClient");
   });
   controllerClient.setSentPacketCallback([](HUDAction::Event action) {
-    Serial.printf(TX_PACKET_FORMAT, HUDAction::getName(action));
+    Serial.printf(OUT_EVENT_FORMAT_STRING, "TX", HUDAction::getName(action), "CtrlrClient");
   });
 
   DEBUG("-----------------------------------------\n\n");
+
+  using namespace HUDCommand1;
+  uint16_t command = 0;
+  command |= 1 << TWO_FLASHES;
+  Serial.printf("command is<TWO_FLASHES>(command): %s (%d) name:%s\n",
+                is<TWO_FLASHES>(command) ? "TRUE" : "FALSE",
+                command,
+                getMode(command));
 
   controllerClient.sendTo(Packet::HUD, HUDAction::HEARTBEAT);
 }

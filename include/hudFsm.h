@@ -30,6 +30,7 @@ namespace HUD
     enum Item
     {
       IDLE,
+      CYCLE_BRIGHTNESS,
       DISCONNECTED,
       PULSE,
       FLASH,
@@ -42,6 +43,8 @@ namespace HUD
       {
       case IDLE:
         return "IDLE";
+      case CYCLE_BRIGHTNESS:
+        return "CYCLE_BRIGHTNESS";
       case DISCONNECTED:
         return "DISCONNECTED";
       case PULSE:
@@ -57,11 +60,12 @@ namespace HUD
     Item mapToTriggers(uint16_t command)
     {
       using namespace HUDCommand1;
+      Serial.printf("mapping from %s\n", HUDCommand1::getMode(command));
       Item item = Item::IDLE;
       if (is<HEARTBEAT>(command))
         item = Triggers::IDLE;
-      else if (is<CYCLE_BRIGHTNESS>(command))
-        item = Triggers::IDLE;
+      else if (is<HUDCommand1::CYCLE_BRIGHTNESS>(command))
+        item = Triggers::CYCLE_BRIGHTNESS;
       else if (is<HUDCommand1::DISCONNECTED>(command))
         item = Triggers::DISCONNECTED;
       else if (is<HUDCommand1::FLASH>(command))
@@ -74,7 +78,9 @@ namespace HUD
         item = Triggers::FLASH;
       else if (is<THREE_FLASHES>(command))
         item = Triggers::FLASH;
-      Serial.printf("mapped to: %s\n", getName(item));
+      else
+        Serial.printf("WARNING: command could not be mapped: %d\n", command);
+      // Serial.printf("mapped to: %s\n", getName(item));
       return item;
     }
   } // namespace Triggers
@@ -104,7 +110,7 @@ namespace HUD
     {
       return id < Length && ARRAY_SIZE(name) == Length
                  ? name[id].c_str()
-                 : "OUT OF RANGE";
+                 : "getStateName: OUT OF RANGE";
     }
   } // namespace StateID
 
