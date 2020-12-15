@@ -28,6 +28,9 @@ GenericClient<HUDAction::Event, uint16_t> controllerClient(COMMS_CONTROLLER);
 ControllerClass controller;
 
 //------------------------------------------------------------------
+bool hudFsmReady = false;
+
+//------------------------------------------------------------------
 
 #include <leds.h>
 #include <hudFsm.h>
@@ -80,7 +83,11 @@ void setup()
 
   HUD::createTask(CORE_1, TASK_PRIORITY_1);
 
+  while (!hudFsmReady)
+    vTaskDelay(100);
+
   nrf24.begin(&radio, &network, COMMS_HUD, packetAvailable_cb);
+
   controllerClient.begin(&network, packetAvailable_cb);
   controllerClient.setConnectedStateChangeCallback(controllerConnectedChange);
   controllerClient.setReadPacketCallback([](uint16_t command) {
@@ -92,13 +99,34 @@ void setup()
 
   DEBUG("-----------------------------------------\n\n");
 
-  using namespace HUDCommand1;
-  uint16_t command = 0;
-  command |= 1 << TWO_FLASHES;
-  Serial.printf("command is<TWO_FLASHES>(command): %s (%d) name:%s\n",
-                is<TWO_FLASHES>(command) ? "TRUE" : "FALSE",
-                command,
-                getMode(command));
+  // Serial.printf("---------start of debug---------");
+  // using namespace HUDCommand1;
+  // uint16_t command = 0;
+  // command |= 1 << TWO_FLASHES;
+  // command |= 1 << BLUE;
+  // command |= 1 << CommandBit::FAST;
+  // Serial.printf("command is<TWO_FLASHES>(command): %s %s %s %s\n",
+  //               is<TWO_FLASHES>(command) ? "TRUE" : "FALSE",
+  //               is<BLUE>(command) ? "TRUE" : "FALSE",
+  //               is<CommandBit::FAST>(command) ? "TRUE" : "FALSE",
+  //               getMode(command));
+
+  // hudQueue->send(command);
+
+  // uint16_t rx = hudQueue->read<uint16_t>();
+
+  // Serial.printf("----------end of debug----------");
+
+  // Serial.printf("command is<TWO_FLASHES>(command): %s %s %s %s\n",
+  //               is<TWO_FLASHES>(command) ? "TRUE" : "FALSE",
+  //               is<BLUE>(command) ? "TRUE" : "FALSE",
+  //               is<CommandBit::FAST>(command) ? "TRUE" : "FALSE",
+  //               getMode(command));
+  // Serial.printf("command is<TWO_FLASHES>(command): %s %s %s %s\n",
+  //               is<TWO_FLASHES>(command) ? "TRUE" : "FALSE",
+  //               is<BLUE>(command) ? "TRUE" : "FALSE",
+  //               is<CommandBit::FAST>(command) ? "TRUE" : "FALSE",
+  //               getMode(command));
 
   controllerClient.sendTo(Packet::HUD, HUDAction::HEARTBEAT);
 }
@@ -110,11 +138,17 @@ void loop()
 {
   button.loop();
 
-  if (sinceCheckedNRF > 100)
+  if (sinceCheckedNRF > 100 && hudFsmReady)
   {
     sinceCheckedNRF = 0;
     controllerClient.update();
   }
 
+  if (sinceState1 > 10000)
+  {
+    using namespace HUDCommand1;
+    sinceState1 = 0;
+    hudQueue->send(1 << THREE_FLASHES | 1 << HUDCommand1::BLUE | 1 << HUDCommand1::FAST);
+  }
   delay(10);
 }

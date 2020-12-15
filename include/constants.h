@@ -111,10 +111,4 @@ namespace Button
 #define CLIENT_CONNECT_CHANGE_FORMAT_STRING "[CLIENT] Controller %s HUD [CLIENT]\n"
 #define FSM_TRIGGER_FORMAT_STRING "!!triggered: %s\n"
 #define RX_PACKET_FORMAT_STRING "[RX]<-- %s|%s|%s <--CONTROLLER\n"
-
-enum LedSpeed
-{
-  NONE = 0,
-  SLOW,
-  FAST,
-};
+#define TRIGGER_PRINT_FORMAT "[Trigger: %s]\n"

@@ -45,9 +45,94 @@ const uint8_t clockwisePerimeter[] = {0, 1, 2, 3, 4, 9, 14, 19, 24, 23, 22, 21, 
 const uint8_t clockwiseInnerPerimeter[] = {6, 7, 8, 13, 18, 17, 16, 11};
 #define NUM_INNER_PERIMETER_LEDS 7
 
+enum LedColour
+{
+  BLUE = 0,
+  RED,
+  GREEN,
+  WHITE,
+  BLACK,
+};
+
+enum LedSpeed
+{
+  NONE = 0,
+  SLOW,
+  FAST,
+};
+
+const char *ledColourName(LedColour col)
+{
+  switch (col)
+  {
+  case BLUE:
+    return "BLUE";
+  case RED:
+    return "RED";
+  case GREEN:
+    return "GREEN";
+  case WHITE:
+    return "WHITE";
+  case BLACK:
+    return "BLACK";
+  }
+  return "OUT OF RANGE (ledColourName)";
+}
+
+const char *ledSpeedName(LedSpeed speed)
+{
+  switch (speed)
+  {
+  case NONE:
+    return "NONE";
+  case SLOW:
+    return "SLOW";
+  case FAST:
+    return "FAST";
+  }
+  return "OUT OF RANGE (ledspeedName)";
+}
+
+LedColour mapToLedColour(uint16_t command)
+{
+  LedColour colour = LedColour::BLACK;
+  using namespace HUDCommand1;
+  if (is<HUDCommand1::GREEN>(command))
+    colour = LedColour::GREEN;
+  else if (is<HUDCommand1::RED>(command))
+    colour = LedColour::RED;
+  else if (is<HUDCommand1::BLUE>(command))
+    colour = LedColour::BLUE;
+  // else if (is<HUDCommand1::WHITE>(command))
+  //   colour = LedColour::WHITE;
+  return colour;
+}
+
+LedSpeed mapToLedSpeed(uint16_t command)
+{
+  LedSpeed spd = LedSpeed::NONE;
+  using namespace HUDCommand1;
+  if (is<HUDCommand1::SLOW>(command))
+    spd = LedSpeed::SLOW;
+  else if (is<HUDCommand1::FAST>(command))
+    spd = LedSpeed::FAST;
+  return spd;
+}
+
+uint8_t mapToNumFlashes(uint16_t command)
+{
+  using namespace HUDCommand1;
+  if (is<HUDCommand1::TWO_FLASHES>(command))
+    return 2;
+  else if (is<HUDCommand1::THREE_FLASHES>(command))
+    return 3;
+  return 1;
+}
+
 //--------------------------------------------
 class LedBaseClass
 {
+
 public:
   virtual void animation() = 0;
 
@@ -63,15 +148,16 @@ public:
 
   void setLeds()
   {
+    CRGB col = _getCRGB(_colour);
     for (int num = 0; num < NUM_LEDS; num++)
     {
-      leds[num] = _colour;
+      leds[num] = col;
     }
-    leds[0] = _colour;
+    leds[0] = col;
     FastLED.show();
   }
 
-  void setLeds(CRGB colour)
+  void setLeds(LedColour colour)
   {
     _colour = colour;
     setLeds();
@@ -82,14 +168,9 @@ public:
     return _speed;
   }
 
-  void setSpeed(uint16_t command)
+  void setSpeed(LedSpeed speed)
   {
-    using namespace HUDCommand1;
-    _speed = LedSpeed::NONE;
-    if (is<CommandBit::SLOW>(command))
-      _speed = LedSpeed::SLOW;
-    else if (is<CommandBit::FAST>(command))
-      _speed = LedSpeed::FAST;
+    _speed = speed;
   }
 
   unsigned long getSpeedInterval()
@@ -97,39 +178,46 @@ public:
     switch (_speed)
     {
     case LedSpeed::SLOW:
-      return 1000;
+      return 500;
     case LedSpeed::FAST:
       return 150;
     default:
-      // Serial.printf("WARNING: NO_SPEED was selected\n");
       return 0;
     }
   }
 
-  CRGB getColour()
+  LedColour getColour()
   {
     return _colour;
   }
 
-  void setColour(uint16_t command)
+  void setColour(LedColour col)
   {
-    using namespace HUDCommand1;
-    if (is<GREEN>(command))
-      _colour = CRGB::DarkGreen;
-    else if (is<RED>(command))
-      _colour = CRGB::DarkRed;
-    else if (is<BLUE>(command))
-      _colour = CRGB::DarkBlue;
-    else
-      _colour = CRGB::Black;
+    _colour = col;
   }
 
   uint8_t numFlashes = 0;
 
 protected:
   uint8_t _walkIdx = 0, _walkIdx2 = -1, _walkIdx3 = -2;
-  CRGB _colour = CRGB::Black;
+  LedColour _colour = BLACK;
   LedSpeed _speed;
+
+  CRGB _getCRGB(LedColour col)
+  {
+    switch (col)
+    {
+    case BLUE:
+      return CRGB::DarkBlue;
+    case RED:
+      return CRGB::DarkRed;
+    case GREEN:
+      return CRGB::DarkGreen;
+    case WHITE:
+      return CRGB::White;
+    }
+    return CRGB::Black;
+  }
 };
 //--------------------------------------------
 
@@ -172,20 +260,21 @@ class StripLedClass : public LedBaseClass
 public:
   void animation()
   {
+    CRGB col = _getCRGB(_colour);
     for (int i = 0; i < NUM_PIXELS; i++)
     {
       if (i == _walkIdx)
       {
-        leds[i] = _colour;
+        leds[i] = col;
       }
       else if (i == _walkIdx2)
       {
-        leds[i] = _colour;
+        leds[i] = col;
         leds[i].fadeLightBy(80);
       }
       else if (i == _walkIdx3)
       {
-        leds[i] = _colour;
+        leds[i] = col;
         leds[i].fadeLightBy(150);
       }
       else
