@@ -99,7 +99,7 @@ void setup()
 
   DEBUG("-----------------------------------------\n\n");
 
-  // Serial.printf("---------start of debug---------");
+  Serial.printf("---------start of debug---------");
   // using namespace HUDCommand1;
   // uint16_t command = 0;
   // command |= 1 << TWO_FLASHES;
@@ -115,18 +115,19 @@ void setup()
 
   // uint16_t rx = hudQueue->read<uint16_t>();
 
-  // Serial.printf("----------end of debug----------");
+  using namespace HUDCommand1;
 
-  // Serial.printf("command is<TWO_FLASHES>(command): %s %s %s %s\n",
-  //               is<TWO_FLASHES>(command) ? "TRUE" : "FALSE",
-  //               is<BLUE>(command) ? "TRUE" : "FALSE",
-  //               is<CommandBit::FAST>(command) ? "TRUE" : "FALSE",
-  //               getMode(command));
-  // Serial.printf("command is<TWO_FLASHES>(command): %s %s %s %s\n",
-  //               is<TWO_FLASHES>(command) ? "TRUE" : "FALSE",
-  //               is<BLUE>(command) ? "TRUE" : "FALSE",
-  //               is<CommandBit::FAST>(command) ? "TRUE" : "FALSE",
-  //               getMode(command));
+  Command command(0x00);
+  command.set<Command::TWO_FLASHES>();
+  command.set<Command::BLUE>();
+  command.set<Command::FAST>();
+
+  Serial.printf("command is<TWO_FLASHES>(command): %s %s %s %s\n",
+                command.is<Command::Enum::TWO_FLASHES>() ? "TRUE" : "FALSE",
+                command.is<Command::Enum::BLUE>() ? "TRUE" : "FALSE",
+                command.is<Command::Enum::FAST>() ? "TRUE" : "FALSE",
+                command.getmode1());
+  Serial.printf("----------end of debug----------");
 
   controllerClient.sendTo(Packet::HUD, HUDAction::HEARTBEAT);
 }
@@ -144,11 +145,11 @@ void loop()
     controllerClient.update();
   }
 
-  if (sinceState1 > 10000)
-  {
-    using namespace HUDCommand1;
-    sinceState1 = 0;
-    hudQueue->send(1 << THREE_FLASHES | 1 << HUDCommand1::BLUE | 1 << HUDCommand1::FAST);
-  }
-  delay(10);
+  // if (sinceState1 > 10000)
+  // {
+  //   using namespace HUDCommand1;
+  //   sinceState1 = 0;
+  //   hudQueue->send(1 << THREE_FLASHES | 1 << HUDCommand1::BLUE | 1 << HUDCommand1::FAST);
+  // }
+  vTaskDelay(10);
 }
