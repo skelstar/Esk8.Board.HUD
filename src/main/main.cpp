@@ -103,14 +103,14 @@ void setup()
   using namespace HUD;
 
   Command command(0x00);
-  command.set<Command::TWO_FLASHES>();
-  command.set<Command::BLUE>();
-  command.set<Command::FAST>();
+  command.set<HUD::TWO_FLASHES>();
+  command.set<HUD::BLUE>();
+  command.set<HUD::FAST>();
 
   Serial.printf("command is<TWO_FLASHES>(command): %s %s %s %s\n",
-                command.is<Command::Enum::TWO_FLASHES>() ? "TRUE" : "FALSE",
-                command.is<Command::Enum::BLUE>() ? "TRUE" : "FALSE",
-                command.is<Command::Enum::FAST>() ? "TRUE" : "FALSE",
+                command.is<HUD::TWO_FLASHES>() ? "TRUE" : "FALSE",
+                command.is<HUD::BLUE>() ? "TRUE" : "FALSE",
+                command.is<HUD::FAST>() ? "TRUE" : "FALSE",
                 command.getMode());
   Serial.printf("----------end of debug----------");
 

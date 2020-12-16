@@ -14,7 +14,7 @@ void packetAvailable_cb(uint16_t from_id, uint8_t type)
   if (false == controller.connected)
   {
     controller.connected = true;
-    hudQueue->send(HUD::Command::HEARTBEAT);
+    hudQueue->send(HUD::HEARTBEAT);
   }
 
   if (type == (int)Packet::HUD)
@@ -22,10 +22,10 @@ void packetAvailable_cb(uint16_t from_id, uint8_t type)
     using namespace HUD;
     Command command = controllerClient.read();
 
-    if (command.is<HUD::Command::CYCLE_BRIGHTNESS>())
+    if (command.is<HUD::CYCLE_BRIGHTNESS>())
     {
       ledDisplay->cycleBrightness();
-      hudQueue->send(Command::TWO_FLASHES | Command::SLOW | Command::BLUE);
+      hudQueue->send(HUD::TWO_FLASHES | HUD::SLOW | HUD::BLUE);
     }
     else
     {

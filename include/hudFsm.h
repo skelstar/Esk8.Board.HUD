@@ -60,21 +60,21 @@ namespace HUD
     {
       using namespace HUD;
       Item item = Item::IDLE;
-      if (command.is<HUD::Command::HEARTBEAT>())
+      if (command.is<HUD::HEARTBEAT>())
         item = Triggers::IDLE;
-      else if (command.is<HUD::Command::CYCLE_BRIGHTNESS>())
+      else if (command.is<HUD::CYCLE_BRIGHTNESS>())
         item = Triggers::CYCLE_BRIGHTNESS;
-      else if (command.is<HUD::Command::DISCONNECTED>())
+      else if (command.is<HUD::DISCONNECTED>())
         item = Triggers::DISCONNECTED;
-      else if (command.is<HUD::Command::FLASH>())
+      else if (command.is<HUD::FLASH>())
         item = Triggers::FLASH;
-      else if (command.is<HUD::Command::PULSE>())
+      else if (command.is<HUD::PULSE>())
         item = Triggers::PULSE;
-      else if (command.is<HUD::Command::SPIN>())
+      else if (command.is<HUD::SPIN>())
         item = Triggers::SPIN;
-      else if (command.is<HUD::Command::TWO_FLASHES>())
+      else if (command.is<HUD::TWO_FLASHES>())
         item = Triggers::FLASH;
-      else if (command.is<HUD::Command::THREE_FLASHES>())
+      else if (command.is<HUD::THREE_FLASHES>())
         item = Triggers::FLASH;
       else
         Serial.printf("WARNING: command could not be mapped: %d\n", command);

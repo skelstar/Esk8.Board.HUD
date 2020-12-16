@@ -97,11 +97,11 @@ LedColour mapToLedColour(HUD::Command command)
 {
   LedColour colour = LedColour::BLACK;
   using namespace HUD;
-  if (command.is<HUD::Command::GREEN>())
+  if (command.is<HUD::GREEN>())
     colour = LedColour::GREEN;
-  else if (command.is<HUD::Command::RED>())
+  else if (command.is<HUD::RED>())
     colour = LedColour::RED;
-  else if (command.is<HUD::Command::BLUE>())
+  else if (command.is<HUD::BLUE>())
     colour = LedColour::BLUE;
   // else if (command.is<HUD::WHITE>(command))
   //   colour = LedColour::WHITE;
@@ -112,9 +112,9 @@ LedSpeed mapToLedSpeed(HUD::Command command)
 {
   LedSpeed spd = LedSpeed::NONE;
   using namespace HUD;
-  if (command.is<HUD::Command::SLOW>())
+  if (command.is<HUD::SLOW>())
     spd = LedSpeed::SLOW;
-  else if (command.is<HUD::Command::FAST>())
+  else if (command.is<HUD::FAST>())
     spd = LedSpeed::FAST;
   return spd;
 }
@@ -122,9 +122,9 @@ LedSpeed mapToLedSpeed(HUD::Command command)
 uint8_t mapToNumFlashes(HUD::Command command)
 {
   using namespace HUD;
-  if (command.is<HUD::Command::TWO_FLASHES>())
+  if (command.is<HUD::TWO_FLASHES>())
     return 2;
-  else if (command.is<HUD::Command::THREE_FLASHES>())
+  else if (command.is<HUD::THREE_FLASHES>())
     return 3;
   return 1;
 }
