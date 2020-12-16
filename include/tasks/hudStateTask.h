@@ -8,14 +8,16 @@ Queue::Manager *hudQueue;
 
 void hudQueueInit()
 {
-  hudQueue = new Queue::Manager(/*len*/ 5, sizeof(uint16_t), /*ticks*/ 5, 0);
+  hudQueue = new Queue::Manager(/*len*/ 5, sizeof(HUD::Command), /*ticks*/ 5, 0);
   hudQueue->setSentEventCallback([](uint16_t ev) {
+    HUD::Command c(ev);
     if (PRINT_QUEUE_SEND)
-      Serial.printf(OUT_EVENT_FORMAT_STRING, "[Q:Send]", HUDCommand1::getCommand(ev), "hudQueue");
+      Serial.printf(OUT_EVENT_FORMAT_STRING, "[Q:Send]", c.getCommand(), "hudQueue");
   });
   hudQueue->setReadEventCallback([](uint16_t ev) {
+    HUD::Command c(ev);
     if (PRINT_QUEUE_READ)
-      Serial.printf(IN_EVENT_FORMAT_STRING, "[Q:Read]", HUDCommand1::getCommand(ev), "hudQueue");
+      Serial.printf(IN_EVENT_FORMAT_STRING, "[Q:Read]", c.getCommand(), "hudQueue");
   });
 }
 
@@ -49,7 +51,7 @@ namespace HUD
       if (sinceReadQueue > 10)
       {
         sinceReadQueue = 0;
-        using namespace HUDCommand1;
+        using namespace HUD;
         uint16_t command = hudQueue->read<uint16_t>();
 
         if (command != 0)

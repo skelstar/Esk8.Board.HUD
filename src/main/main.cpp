@@ -23,7 +23,7 @@ NRF24L01Lib nrf24;
 
 RF24 radio(NRF_CE, NRF_CS);
 RF24Network network(radio);
-GenericClient<HUDAction::Event, uint16_t> controllerClient(COMMS_CONTROLLER);
+GenericClient<HUDAction::Event, HUD::Command> controllerClient(COMMS_CONTROLLER);
 
 ControllerClass controller;
 
@@ -90,8 +90,8 @@ void setup()
 
   controllerClient.begin(&network, packetAvailable_cb);
   controllerClient.setConnectedStateChangeCallback(controllerConnectedChange);
-  controllerClient.setReadPacketCallback([](uint16_t command) {
-    Serial.printf(IN_EVENT_FORMAT_STRING, "RX", HUDCommand1::getMode(command), "CtrlrClient");
+  controllerClient.setReadPacketCallback([](HUD::Command command) {
+    Serial.printf(IN_EVENT_FORMAT_STRING, "RX", command.getMode(), "CtrlrClient");
   });
   controllerClient.setSentPacketCallback([](HUDAction::Event action) {
     Serial.printf(OUT_EVENT_FORMAT_STRING, "TX", HUDAction::getName(action), "CtrlrClient");
@@ -100,22 +100,7 @@ void setup()
   DEBUG("-----------------------------------------\n\n");
 
   Serial.printf("---------start of debug---------");
-  // using namespace HUDCommand1;
-  // uint16_t command = 0;
-  // command |= 1 << TWO_FLASHES;
-  // command |= 1 << BLUE;
-  // command |= 1 << CommandBit::FAST;
-  // Serial.printf("command is<TWO_FLASHES>(command): %s %s %s %s\n",
-  //               is<TWO_FLASHES>(command) ? "TRUE" : "FALSE",
-  //               is<BLUE>(command) ? "TRUE" : "FALSE",
-  //               is<CommandBit::FAST>(command) ? "TRUE" : "FALSE",
-  //               getMode(command));
-
-  // hudQueue->send(command);
-
-  // uint16_t rx = hudQueue->read<uint16_t>();
-
-  using namespace HUDCommand1;
+  using namespace HUD;
 
   Command command(0x00);
   command.set<Command::TWO_FLASHES>();
@@ -126,7 +111,7 @@ void setup()
                 command.is<Command::Enum::TWO_FLASHES>() ? "TRUE" : "FALSE",
                 command.is<Command::Enum::BLUE>() ? "TRUE" : "FALSE",
                 command.is<Command::Enum::FAST>() ? "TRUE" : "FALSE",
-                command.getmode1());
+                command.getMode());
   Serial.printf("----------end of debug----------");
 
   controllerClient.sendTo(Packet::HUD, HUDAction::HEARTBEAT);
@@ -147,9 +132,9 @@ void loop()
 
   // if (sinceState1 > 10000)
   // {
-  //   using namespace HUDCommand1;
+  //   using namespace HUD;
   //   sinceState1 = 0;
-  //   hudQueue->send(1 << THREE_FLASHES | 1 << HUDCommand1::BLUE | 1 << HUDCommand1::FAST);
+  //   hudQueue->send(1 << THREE_FLASHES | 1 << HUD::BLUE | 1 << HUD::FAST);
   // }
   vTaskDelay(10);
 }

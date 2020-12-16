@@ -93,38 +93,38 @@ const char *ledSpeedName(LedSpeed speed)
   return "OUT OF RANGE (ledspeedName)";
 }
 
-LedColour mapToLedColour(uint16_t command)
+LedColour mapToLedColour(HUD::Command command)
 {
   LedColour colour = LedColour::BLACK;
-  using namespace HUDCommand1;
-  if (is<HUDCommand1::GREEN>(command))
+  using namespace HUD;
+  if (command.is<HUD::Command::GREEN>())
     colour = LedColour::GREEN;
-  else if (is<HUDCommand1::RED>(command))
+  else if (command.is<HUD::Command::RED>())
     colour = LedColour::RED;
-  else if (is<HUDCommand1::BLUE>(command))
+  else if (command.is<HUD::Command::BLUE>())
     colour = LedColour::BLUE;
-  // else if (is<HUDCommand1::WHITE>(command))
+  // else if (command.is<HUD::WHITE>(command))
   //   colour = LedColour::WHITE;
   return colour;
 }
 
-LedSpeed mapToLedSpeed(uint16_t command)
+LedSpeed mapToLedSpeed(HUD::Command command)
 {
   LedSpeed spd = LedSpeed::NONE;
-  using namespace HUDCommand1;
-  if (is<HUDCommand1::SLOW>(command))
+  using namespace HUD;
+  if (command.is<HUD::Command::SLOW>())
     spd = LedSpeed::SLOW;
-  else if (is<HUDCommand1::FAST>(command))
+  else if (command.is<HUD::Command::FAST>())
     spd = LedSpeed::FAST;
   return spd;
 }
 
-uint8_t mapToNumFlashes(uint16_t command)
+uint8_t mapToNumFlashes(HUD::Command command)
 {
-  using namespace HUDCommand1;
-  if (is<HUDCommand1::TWO_FLASHES>(command))
+  using namespace HUD;
+  if (command.is<HUD::Command::TWO_FLASHES>())
     return 2;
-  else if (is<HUDCommand1::THREE_FLASHES>(command))
+  else if (command.is<HUD::Command::THREE_FLASHES>())
     return 3;
   return 1;
 }
