@@ -25,7 +25,7 @@ void packetAvailable_cb(uint16_t from_id, uint8_t type)
     if (command.is<HUD::CYCLE_BRIGHTNESS>())
     {
       ledDisplay->cycleBrightness();
-      hudQueue->send(HUD::TWO_FLASHES | HUD::SLOW | HUD::BLUE);
+      hudQueue->send(HUD::FLASH | HUD::BLUE | HUD::SLOW);
     }
     else
     {
@@ -38,15 +38,6 @@ void packetAvailable_cb(uint16_t from_id, uint8_t type)
   }
 }
 //------------------------------------------------------------------
-void controllerConnectedChange()
-{
-  Serial.printf(CLIENT_CONNECT_CHANGE_FORMAT_STRING,
-                controllerClient.connected()
-                    ? "<----->"
-                    : "-- | --");
-  // if (controllerClient.connected())
-  //   hudQueue->send(1 << HUD::HEARTBEAT);
-}
 
 void printRxPacket(HUD::Command command)
 {

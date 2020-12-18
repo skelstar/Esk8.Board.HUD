@@ -12,12 +12,12 @@ void hudQueueInit()
   hudQueue->setSentEventCallback([](uint16_t ev) {
     HUD::Command c(ev);
     if (PRINT_QUEUE_SEND)
-      Serial.printf(OUT_EVENT_FORMAT_STRING, "[Q:Send]", c.getCommand(), "hudQueue");
+      Serial.printf(PRINT_QUEUE_SEND_FORMAT, c.getCommand(), "HUD");
   });
   hudQueue->setReadEventCallback([](uint16_t ev) {
     HUD::Command c(ev);
     if (PRINT_QUEUE_READ)
-      Serial.printf(IN_EVENT_FORMAT_STRING, "[Q:Read]", c.getCommand(), "hudQueue");
+      Serial.printf(PRINT_QUEUE_READ_FORMAT, "HUD", c.getCommand());
   });
 }
 
@@ -95,17 +95,19 @@ namespace HUD
   {
     addTransitions();
 
-    stateFsm.begin(&fsm, STATE_STRING_FORMAT_WITH_EVENT, STATE_STRING_FORMAT_WITHOUT_EVENT);
-    stateFsm.setGetStateNameCallback([](uint16_t id) {
-      return HUD::StateID::getStateName(id);
+    stateFsm.begin(&fsm);
+    stateFsm.setPrintStateCallback([](uint16_t id) {
+      if (PRINT_STATE)
+        Serial.printf(PRINT_STATE_FORMAT, "STATE", HUD::StateID::getStateName(id));
     });
-    stateFsm.setGetEventNameCallback([](uint16_t ev) {
-      return Triggers::getName(ev);
+    stateFsm.setPrintStateEventCallback([](uint16_t ev) {
+      if (PRINT_STATE_EVENT)
+        Serial.printf(PRINT_STATE_EVENT_FORMAT, "STATE", Triggers::getName(ev));
     });
     stateFsm.setTriggeredCallback([](uint16_t tr) {
       Serial.printf(TRIGGER_PRINT_FORMAT, Triggers::getName(tr));
     });
-  }
+  } // namespace HUD
 
 } // namespace HUD
   //-----------------------------------------------------------------------

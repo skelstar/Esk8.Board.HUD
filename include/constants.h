@@ -68,39 +68,26 @@ namespace Button
 
 //----------------------------
 
-// namespace HUDSpecialEvents
-// {
-//   enum HUDSpecialEvents
-//   {
-//     DISCONNECTED = HUDCommand::ModeLength, // makes sure it doesn't conflict with HUDCommand
-//     CYCLE_BRIGHTNESS,
-//     Length
-//   };
-
-//   const char *getEvent(HUDSpecialEvents ev)
-//   {
-//     switch (ev)
-//     {
-//     case DISCONNECTED:
-//       return "DISCONNECTED";
-//     case CYCLE_BRIGHTNESS:
-//       return "CYCLE_BRIGHTNESS";
-//     }
-//     return OUT_OF_RANGE;
-//   }
-// } // namespace HUDSpecialEvents
-
 #ifndef PRINT_QUEUE_SEND
 #define PRINT_QUEUE_SEND 0
 #endif
 #ifndef PRINT_QUEUE_READ
 #define PRINT_QUEUE_READ 0
 #endif
+#ifndef PRINT_PACKET_TX
+#define PRINT_PACKET_TX 0
+#endif
 #ifndef PRINT_PACKET_RX
 #define PRINT_PACKET_RX 0
 #endif
 #ifndef PRINT_SEND_ACTION
 #define PRINT_SEND_ACTION 0
+#endif
+#ifndef PRINT_STATE
+#define PRINT_STATE 0
+#endif
+#ifndef PRINT_STATE_EVENT
+#define PRINT_STATE_EVENT 0
 #endif
 
 #define OUT_EVENT_FORMAT_STRING "%s --> %s --> %s\n"

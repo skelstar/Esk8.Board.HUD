@@ -103,8 +103,7 @@ LedColour mapToLedColour(HUD::Command command)
     colour = LedColour::RED;
   else if (command.is<HUD::BLUE>())
     colour = LedColour::BLUE;
-  // else if (command.is<HUD::WHITE>(command))
-  //   colour = LedColour::WHITE;
+  // Serial.printf("Mapped colour to %s\n", ledColourName(colour));
   return colour;
 }
 
@@ -180,7 +179,7 @@ public:
     case LedSpeed::SLOW:
       return 500;
     case LedSpeed::FAST:
-      return 150;
+      return 100;
     default:
       return 0;
     }

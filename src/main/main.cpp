@@ -8,6 +8,7 @@
 #include <Arduino.h>
 #include <shared-utils.h>
 #include <types.h>
+#include <printFormatStrings.h>
 #include <QueueManager.h>
 #include <FsmManager.h>
 #include <constants.h>
@@ -18,25 +19,49 @@
 #include <GenericClient.h>
 
 //------------------------------------------------------------------
+bool hudFsmReady = false;
 
 NRF24L01Lib nrf24;
 
 RF24 radio(NRF_CE, NRF_CS);
 RF24Network network(radio);
-GenericClient<HUDAction::Event, HUD::Command> controllerClient(COMMS_CONTROLLER);
 
 ControllerClass controller;
 
 //------------------------------------------------------------------
-bool hudFsmReady = false;
+
+#include <leds.h>
+#include <Button2.h>
+#include <hudFsm.h>
+#include <tasks/hudStateTask.h>
 
 //------------------------------------------------------------------
 
-#include <leds.h>
-#include <hudFsm.h>
-#include <tasks/hudStateTask.h>
-#include <Button2.h>
+GenericClient<HUDAction::Event, HUD::Command> controllerClient(COMMS_CONTROLLER);
+
 #include <nrf_comms.h>
+
+void controllerConnectedChange()
+{
+  Serial.printf(CLIENT_CONNECT_CHANGE_FORMAT_STRING,
+                controllerClient.connected()
+                    ? "<----->"
+                    : "-- | --");
+}
+
+void controllerClientInit()
+{
+  controllerClient.begin(&network, packetAvailable_cb, PRINT_PACKET_TX, PRINT_PACKET_RX);
+  controllerClient.setConnectedStateChangeCallback(controllerConnectedChange);
+  controllerClient.setSentPacketCallback([](HUDAction::Event action) {
+    Serial.printf(PRINT_TX_PACKET_TO_FORMAT, "CTRLR", HUDAction::getName(action));
+  });
+  controllerClient.setReadPacketCallback([](HUD::Command command) {
+    Serial.printf(PRINT_RX_PACKET_FROM_FORMAT, "CTRLR", command.getMode());
+  });
+}
+
+//------------------------------------------------------------------
 
 Button2 button(BUTTON_PIN);
 
@@ -88,31 +113,22 @@ void setup()
 
   nrf24.begin(&radio, &network, COMMS_HUD, packetAvailable_cb);
 
-  controllerClient.begin(&network, packetAvailable_cb);
-  controllerClient.setConnectedStateChangeCallback(controllerConnectedChange);
-  controllerClient.setReadPacketCallback([](HUD::Command command) {
-    Serial.printf(IN_EVENT_FORMAT_STRING, "RX", command.getMode(), "CtrlrClient");
-  });
-  controllerClient.setSentPacketCallback([](HUDAction::Event action) {
-    Serial.printf(OUT_EVENT_FORMAT_STRING, "TX", HUDAction::getName(action), "CtrlrClient");
-  });
+  controllerClientInit();
 
   DEBUG("-----------------------------------------\n\n");
 
-  Serial.printf("---------start of debug---------");
-  using namespace HUD;
+  // Serial.printf("---------start of debug---------\n\n");
+  // using namespace HUD;
 
-  Command command(0x00);
-  command.set<HUD::TWO_FLASHES>();
-  command.set<HUD::BLUE>();
-  command.set<HUD::FAST>();
+  // Command command(0x00);
+  // command.set(HUD::TWO_FLASHES, HUD::BLUE, HUD::FAST);
 
-  Serial.printf("command is<TWO_FLASHES>(command): %s %s %s %s\n",
-                command.is<HUD::TWO_FLASHES>() ? "TRUE" : "FALSE",
-                command.is<HUD::BLUE>() ? "TRUE" : "FALSE",
-                command.is<HUD::FAST>() ? "TRUE" : "FALSE",
-                command.getMode());
-  Serial.printf("----------end of debug----------");
+  // Serial.printf("command is<TWO_FLASHES>(command): %s %s %s %s\n",
+  //               command.is<HUD::TWO_FLASHES>() ? "TRUE" : "FALSE",
+  //               command.is<HUD::BLUE>() ? "TRUE" : "FALSE",
+  //               command.is<HUD::FAST>() ? "TRUE" : "FALSE",
+  //               command.getMode());
+  // Serial.printf("\n----------end of debug----------\n\n");
 
   controllerClient.sendTo(Packet::HUD, HUDAction::HEARTBEAT);
 }
