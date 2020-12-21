@@ -17,9 +17,7 @@ elapsedMillis sinceStartedCycle,
     sinceStartedFlash,
     sinceReadQueue;
 bool pulseOn;
-LedColour origColour = LedColour::BLACK;
-uint8_t flashPhase = 0;
-ulong interval = 0;
+ulong flashInterval = 0;
 
 //---------------------------------------------
 namespace HUD
@@ -141,42 +139,26 @@ namespace HUD
       [] {});
   //----------------------------------------
 
-#define FINISHED 1
-#define NOT_FINISHED 0
-
-  bool flashLeds()
-  {
-    flashPhase++;
-    if (flashPhase == ledDisplay->numFlashes * 2)
-      return FINISHED;
-    else
-    {
-      LedColour colour = (flashPhase % 2 == 0) ? origColour : LedColour::BLACK;
-      ledDisplay->setLeds(colour);
-    }
-    return NOT_FINISHED;
-  }
-
   State stateFlash(
       StateID::FLASH,
       [] {
         stateFsm.printState(StateID::FLASH);
         sinceStartedFlash = 0;
-        flashPhase = 0;
-        origColour = ledDisplay->getColour();
-        ledDisplay->setLeds(origColour);
-        interval = ledDisplay->getSpeedInterval();
+        flashInterval = ledDisplay->getSpeedInterval();
+        ledDisplay->flashLeds(/*start*/ true);
       },
       [] {
-        if (sinceStartedFlash > interval)
+        if (sinceStartedFlash > flashInterval)
         {
           sinceStartedFlash = 0;
-          bool finished = flashLeds();
-          if (finished)
+          if (ledDisplay->flashLeds() == FINISHED)
             stateFsm.trigger(Triggers::IDLE);
         }
       },
-      NULL);
+      [] {
+        // clean up
+        ledDisplay->setColour(LedColour::BLACK);
+      });
   //----------------------------------------
   State statePulse(
       StateID::PULSE,
@@ -185,7 +167,7 @@ namespace HUD
         ledDisplay->setLeds();
         pulseOn = true;
         sinceStartedPulse = 0;
-        origColour = ledDisplay->getColour();
+        // origColour = ledDisplay->getColour();
       },
       [] {
         ulong interval = ledDisplay->getSpeedInterval();
@@ -193,7 +175,7 @@ namespace HUD
         {
           sinceStartedPulse = 0;
           pulseOn = !pulseOn;
-          ledDisplay->setLeds(pulseOn ? origColour : LedColour::BLACK);
+          // ledDisplay->setLeds(pulseOn ? origColour : LedColour::BLACK);
         }
       },
       [] {
@@ -220,7 +202,7 @@ namespace HUD
 
   void sendHeartbeatToController()
   {
-    uint8_t d = (HUDAction::HEARTBEAT);
+    uint8_t d = (HUDAction::Event::HEARTBEAT);
     nrf24.send(COMMS_CONTROLLER, Packet::HUD, &d, sizeof(uint8_t));
   }
 

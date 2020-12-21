@@ -75,12 +75,12 @@ Button2 button(BUTTON_PIN);
 void buttonPressedHandler(Button2 &btn)
 {
   using HUDAction::Event;
-  controllerClient.sendTo(Packet::HUD, HUDAction::ONE_CLICK);
+  controllerClient.sendTo(Packet::HUD, HUDAction::Event::ONE_CLICK);
 }
 
 void buttonDoubleClickHandler(Button2 &btn)
 {
-  controllerClient.sendTo(Packet::HUD, HUDAction::TWO_CLICK);
+  controllerClient.sendTo(Packet::HUD, HUDAction::Event::TWO_CLICK);
 }
 
 void buttonTripleClickHandler(Button2 &btn)
@@ -94,7 +94,7 @@ void buttonTripleClickHandler(Button2 &btn)
   }
   else
   {
-    controllerClient.sendTo(Packet::HUD, HUDAction::THREE_CLICK);
+    controllerClient.sendTo(Packet::HUD, HUDAction::Event::THREE_CLICK);
   }
 }
 //-----------------------------------------------
@@ -137,7 +137,7 @@ void setup()
   //               command.getMode());
   // Serial.printf("\n----------end of debug----------\n\n");
 
-  controllerClient.sendTo(Packet::HUD, HUDAction::HEARTBEAT);
+  controllerClient.sendTo(Packet::HUD, HUDAction::Event::HEARTBEAT);
 }
 //-----------------------------------------------
 

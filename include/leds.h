@@ -195,11 +195,27 @@ public:
     _colour = col;
   }
 
+  bool flashLeds(bool start = false)
+  {
+    if (start)
+    {
+      _flashPhase = 0;
+      _originalColour = _colour;
+    }
+    if (_flashPhase % 2 == 0)
+      setLeds(_originalColour);
+    else
+      setLeds(LedColour::BLACK);
+    _flashPhase++;
+    return _flashPhase == numFlashes * 2;
+  }
+
   uint8_t numFlashes = 0;
 
 protected:
   uint8_t _walkIdx = 0, _walkIdx2 = -1, _walkIdx3 = -2;
-  LedColour _colour = BLACK;
+  uint8_t _flashPhase = 0;
+  LedColour _colour = BLACK, _originalColour = BLACK;
   LedSpeed _speed;
 
   CRGB _getCRGB(LedColour col)

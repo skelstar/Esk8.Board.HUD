@@ -66,6 +66,8 @@ namespace Button
 #define MODE_SPIN 7
 #define COLOUR_BLACK 8
 
+#define FINISHED 1
+
 //----------------------------
 
 #ifndef PRINT_QUEUE_SEND
