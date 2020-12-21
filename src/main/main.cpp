@@ -37,7 +37,7 @@ ControllerClass controller;
 
 //------------------------------------------------------------------
 
-GenericClient<HUDAction::Event, HUD::Command> controllerClient(COMMS_CONTROLLER);
+GenericClient<HUDAction::Event, HUD::Instruction> controllerClient(COMMS_CONTROLLER);
 
 #include <nrf_comms.h>
 
@@ -54,10 +54,10 @@ void printTxPacket(HUDAction::Event action)
   if (PRINT_PACKET_TX)
     Serial.printf(PRINT_TX_PACKET_TO_FORMAT, "CTRLR", HUDAction::getName(action));
 }
-void printRxPacket(HUD::Command command)
+void printRxPacket(HUD::Instruction instruction)
 {
   if (PRINT_PACKET_RX)
-    Serial.printf(PRINT_RX_PACKET_FROM_FORMAT, "CTRLR", command.getMode());
+    Serial.printf(PRINT_RX_PACKET_FROM_FORMAT, "CTRLR", instruction.getMode());
 }
 
 void controllerClientInit()
@@ -103,7 +103,7 @@ void setup()
 {
   Serial.begin(115200);
   DEBUG("-----------------------------------------\n");
-  Serial.printf("Esk8.Board.HUD ready!\n");
+  DEBUG("          Esk8.Board.HUD ready!\n");
   DEBUG("-----------------------------------------\n");
 
   if (USE_DEEPSLEEP)
@@ -121,21 +121,6 @@ void setup()
   nrf24.begin(&radio, &network, COMMS_HUD, packetAvailable_cb);
 
   controllerClientInit();
-
-  DEBUG("-----------------------------------------\n\n");
-
-  // Serial.printf("---------start of debug---------\n\n");
-  // using namespace HUD;
-
-  // Command command(0x00);
-  // command.set(HUD::TWO_FLASHES, HUD::BLUE, HUD::FAST);
-
-  // Serial.printf("command is<TWO_FLASHES>(command): %s %s %s %s\n",
-  //               command.is<HUD::TWO_FLASHES>() ? "TRUE" : "FALSE",
-  //               command.is<HUD::BLUE>() ? "TRUE" : "FALSE",
-  //               command.is<HUD::FAST>() ? "TRUE" : "FALSE",
-  //               command.getMode());
-  // Serial.printf("\n----------end of debug----------\n\n");
 
   controllerClient.sendTo(Packet::HUD, HUDAction::Event::HEARTBEAT);
 }

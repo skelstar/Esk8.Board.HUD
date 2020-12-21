@@ -8,16 +8,16 @@ Queue::Manager *hudQueue;
 
 void hudQueueInit()
 {
-  hudQueue = new Queue::Manager(/*len*/ 5, sizeof(HUD::Command), /*ticks*/ 5, 0);
+  hudQueue = new Queue::Manager(/*len*/ 5, sizeof(HUD::Instruction), /*ticks*/ 5, 0);
   hudQueue->setSentEventCallback([](uint16_t ev) {
-    HUD::Command c(ev);
+    HUD::Instruction c(ev);
     if (PRINT_QUEUE_SEND)
-      Serial.printf(PRINT_QUEUE_SEND_FORMAT, c.getCommand(), "HUD");
+      Serial.printf(PRINT_QUEUE_SEND_FORMAT, c.getInstruction(), "HUD");
   });
   hudQueue->setReadEventCallback([](uint16_t ev) {
-    HUD::Command c(ev);
+    HUD::Instruction c(ev);
     if (PRINT_QUEUE_READ)
-      Serial.printf(PRINT_QUEUE_READ_FORMAT, "HUD", c.getCommand());
+      Serial.printf(PRINT_QUEUE_READ_FORMAT, "HUD", c.getInstruction());
   });
 }
 
@@ -52,15 +52,15 @@ namespace HUD
       {
         sinceReadQueue = 0;
         using namespace HUD;
-        uint16_t command = hudQueue->read<uint16_t>();
+        uint16_t instruction = hudQueue->read<uint16_t>();
 
-        if (command != 0)
+        if (instruction != 0)
         {
-          ledDisplay->setColour(mapToLedColour(command));
-          ledDisplay->setSpeed(mapToLedSpeed(command));
-          ledDisplay->numFlashes = mapToNumFlashes(command);
+          ledDisplay->setColour(mapToLedColour(instruction));
+          ledDisplay->setSpeed(mapToLedSpeed(instruction));
+          ledDisplay->numFlashes = mapToNumFlashes(instruction);
 
-          stateFsm.trigger(HUD::Triggers::mapToTriggers(command));
+          stateFsm.trigger(HUD::Triggers::mapToTriggers(instruction));
         }
       }
       sinceRunMachine = 0;

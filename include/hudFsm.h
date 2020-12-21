@@ -54,28 +54,28 @@ namespace HUD
       return "WARNING: Triggers.getName() OUT_OF_RANGE";
     }
 
-    Item mapToTriggers(HUD::Command command)
+    Item mapToTriggers(HUD::Instruction instruction)
     {
       using namespace HUD;
       Item item = Item::IDLE;
-      if (command.is<HUD::HEARTBEAT>())
+      if (instruction.is<HUD::HEARTBEAT>())
         item = Triggers::IDLE;
-      else if (command.is<HUD::CYCLE_BRIGHTNESS>())
+      else if (instruction.is<HUD::CYCLE_BRIGHTNESS>())
         item = Triggers::CYCLE_BRIGHTNESS;
-      else if (command.is<HUD::DISCONNECTED>())
+      else if (instruction.is<HUD::DISCONNECTED>())
         item = Triggers::DISCONNECTED;
-      else if (command.is<HUD::FLASH>())
+      else if (instruction.is<HUD::FLASH>())
         item = Triggers::FLASH;
-      else if (command.is<HUD::PULSE>())
+      else if (instruction.is<HUD::PULSE>())
         item = Triggers::PULSE;
-      else if (command.is<HUD::SPIN>())
+      else if (instruction.is<HUD::SPIN>())
         item = Triggers::SPIN;
-      else if (command.is<HUD::TWO_FLASHES>())
+      else if (instruction.is<HUD::TWO_FLASHES>())
         item = Triggers::FLASH;
-      else if (command.is<HUD::THREE_FLASHES>())
+      else if (instruction.is<HUD::THREE_FLASHES>())
         item = Triggers::FLASH;
       else
-        Serial.printf("WARNING: command could not be mapped: %d\n", command);
+        Serial.printf("WARNING: instruction could not be mapped: %d\n", instruction);
       return item;
     }
   } // namespace Triggers

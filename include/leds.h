@@ -93,37 +93,37 @@ const char *ledSpeedName(LedSpeed speed)
   return "OUT OF RANGE (ledspeedName)";
 }
 
-LedColour mapToLedColour(HUD::Command command)
+LedColour mapToLedColour(HUD::Instruction instruction)
 {
   LedColour colour = LedColour::BLACK;
   using namespace HUD;
-  if (command.is<HUD::GREEN>())
+  if (instruction.is<HUD::GREEN>())
     colour = LedColour::GREEN;
-  else if (command.is<HUD::RED>())
+  else if (instruction.is<HUD::RED>())
     colour = LedColour::RED;
-  else if (command.is<HUD::BLUE>())
+  else if (instruction.is<HUD::BLUE>())
     colour = LedColour::BLUE;
   // Serial.printf("Mapped colour to %s\n", ledColourName(colour));
   return colour;
 }
 
-LedSpeed mapToLedSpeed(HUD::Command command)
+LedSpeed mapToLedSpeed(HUD::Instruction instruction)
 {
   LedSpeed spd = LedSpeed::NONE;
   using namespace HUD;
-  if (command.is<HUD::SLOW>())
+  if (instruction.is<HUD::SLOW>())
     spd = LedSpeed::SLOW;
-  else if (command.is<HUD::FAST>())
+  else if (instruction.is<HUD::FAST>())
     spd = LedSpeed::FAST;
   return spd;
 }
 
-uint8_t mapToNumFlashes(HUD::Command command)
+uint8_t mapToNumFlashes(HUD::Instruction instruction)
 {
   using namespace HUD;
-  if (command.is<HUD::TWO_FLASHES>())
+  if (instruction.is<HUD::TWO_FLASHES>())
     return 2;
-  else if (command.is<HUD::THREE_FLASHES>())
+  else if (instruction.is<HUD::THREE_FLASHES>())
     return 3;
   return 1;
 }

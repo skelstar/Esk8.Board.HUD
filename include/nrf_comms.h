@@ -20,16 +20,16 @@ void packetAvailable_cb(uint16_t from_id, uint8_t type)
   if (type == (int)Packet::HUD)
   {
     using namespace HUD;
-    Command command = controllerClient.read();
+    Instruction instruction = controllerClient.read();
 
-    if (command.is<HUD::CYCLE_BRIGHTNESS>())
+    if (instruction.is<HUD::CYCLE_BRIGHTNESS>())
     {
       ledDisplay->cycleBrightness();
       hudQueue->send(HUD::FLASH | HUD::BLUE | HUD::SLOW);
     }
     else
     {
-      hudQueue->send(command.get());
+      hudQueue->send(instruction.get());
     }
   }
   else
