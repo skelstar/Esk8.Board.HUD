@@ -49,16 +49,23 @@ void controllerConnectedChange()
                     : "-- | --");
 }
 
+void printTxPacket(HUDAction::Event action)
+{
+  if (PRINT_PACKET_TX)
+    Serial.printf(PRINT_TX_PACKET_TO_FORMAT, "CTRLR", HUDAction::getName(action));
+}
+void printRxPacket(HUD::Command command)
+{
+  if (PRINT_PACKET_RX)
+    Serial.printf(PRINT_RX_PACKET_FROM_FORMAT, "CTRLR", command.getMode());
+}
+
 void controllerClientInit()
 {
-  controllerClient.begin(&network, packetAvailable_cb, PRINT_PACKET_TX, PRINT_PACKET_RX);
+  controllerClient.begin(&network, packetAvailable_cb);
   controllerClient.setConnectedStateChangeCallback(controllerConnectedChange);
-  controllerClient.setSentPacketCallback([](HUDAction::Event action) {
-    Serial.printf(PRINT_TX_PACKET_TO_FORMAT, "CTRLR", HUDAction::getName(action));
-  });
-  controllerClient.setReadPacketCallback([](HUD::Command command) {
-    Serial.printf(PRINT_RX_PACKET_FROM_FORMAT, "CTRLR", command.getMode());
-  });
+  controllerClient.setSentPacketCallback(printTxPacket);
+  controllerClient.setReadPacketCallback(printRxPacket);
 }
 
 //------------------------------------------------------------------

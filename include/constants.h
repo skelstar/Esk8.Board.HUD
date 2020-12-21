@@ -83,11 +83,11 @@ namespace Button
 #ifndef PRINT_SEND_ACTION
 #define PRINT_SEND_ACTION 0
 #endif
-#ifndef PRINT_STATE
-#define PRINT_STATE 0
+#ifndef PRINT_FSM_STATE
+#define PRINT_FSM_STATE 0
 #endif
-#ifndef PRINT_STATE_EVENT
-#define PRINT_STATE_EVENT 0
+#ifndef PRINT_FSM_TRIGGER
+#define PRINT_FSM_TRIGGER 0
 #endif
 
 #define OUT_EVENT_FORMAT_STRING "%s --> %s --> %s\n"

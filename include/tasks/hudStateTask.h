@@ -91,22 +91,24 @@ namespace HUD
     ledDisplay->setLeds(LedColour::BLUE);
   }
 
+  void printFsmState(uint16_t id)
+  {
+    if (PRINT_FSM_STATE)
+      Serial.printf(PRINT_STATE_FORMAT, "STATE", HUD::StateID::getStateName(id));
+  }
+  void printFsmTrigger(uint16_t ev)
+  {
+    if (PRINT_FSM_TRIGGER)
+      Serial.printf(PRINT_sFSM_sTRIGGER_FORMAT, "STATE", Triggers::getName(ev));
+  }
+
   void setupFsm()
   {
     addTransitions();
 
     stateFsm.begin(&fsm);
-    stateFsm.setPrintStateCallback([](uint16_t id) {
-      if (PRINT_STATE)
-        Serial.printf(PRINT_STATE_FORMAT, "STATE", HUD::StateID::getStateName(id));
-    });
-    stateFsm.setPrintStateEventCallback([](uint16_t ev) {
-      if (PRINT_STATE_EVENT)
-        Serial.printf(PRINT_STATE_EVENT_FORMAT, "STATE", Triggers::getName(ev));
-    });
-    stateFsm.setTriggeredCallback([](uint16_t tr) {
-      Serial.printf(TRIGGER_PRINT_FORMAT, Triggers::getName(tr));
-    });
+    stateFsm.setPrintStateCallback(printFsmState);
+    stateFsm.setTriggeredCallback(printFsmTrigger);
   } // namespace HUD
 
 } // namespace HUD

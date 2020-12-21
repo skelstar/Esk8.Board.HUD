@@ -38,12 +38,3 @@ void packetAvailable_cb(uint16_t from_id, uint8_t type)
   }
 }
 //------------------------------------------------------------------
-
-void printRxPacket(HUD::Command command)
-{
-  if (PRINT_PACKET_RX)
-    Serial.printf(RX_PACKET_FORMAT_STRING,
-                  command.getMode("printRxPacket"),
-                  command.getColour(),
-                  command.getSpeed());
-}
