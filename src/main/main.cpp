@@ -23,7 +23,7 @@ bool hudFsmReady = false;
 
 NRF24L01Lib nrf24;
 
-RF24 radio(NRF_CE, NRF_CS);
+RF24 radio(SPI_CE, SPI_CS);
 RF24Network network(radio);
 
 ControllerClass controller;

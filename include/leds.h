@@ -1,9 +1,6 @@
 
 #include <FastLED.h>
 
-#define NUM_LEDS 25
-#define LED_PIN 27
-
 enum LedSection
 {
   BOARD,

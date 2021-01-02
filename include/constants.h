@@ -2,8 +2,6 @@
 #include <shared-utils.h>
 #endif
 
-#define BUTTON_PIN 16
-
 namespace Button
 {
   enum Event
@@ -39,9 +37,6 @@ namespace Button
 #define COMMS_CONTROLLER 00 // so controller can send to HUD (02)
 #define COMMS_BOARD 01
 #define COMMS_HUD 02
-
-#define NRF_CE 33
-#define NRF_CS 26
 
 #define CONTROLLER_HEARTBEAT_INTERVAL 1000
 
@@ -90,6 +85,12 @@ namespace Button
 #endif
 #ifndef PRINT_FSM_TRIGGER
 #define PRINT_FSM_TRIGGER 0
+#endif
+#ifndef IS_ESP32
+#define IS_ESP32 0
+#endif
+#ifndef IS_PICO
+#define IS_PICO 0
 #endif
 
 #define OUT_EVENT_FORMAT_STRING "%s --> %s --> %s\n"
